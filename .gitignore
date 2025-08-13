@@ -1,0 +1,111 @@
+# .gitignore para projeto React Native (Frontend) e .NET (Backend)
+
+
+
+
+# Frontend (React Native)
+frontend/node_modules/
+frontend/ios/build/
+frontend/android/build/
+frontend/android/app/build/
+frontend/android/.gradle/
+frontend/.expo/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/android/key.keystore
+frontend/android/app/src/debug/
+frontend/android/app/src/release/
+frontend/android/local.properties
+frontend/package-lock.json
+frontend/yarn.lock
+
+
+
+
+# Backend (.NET)
+backend/bin/
+backend/obj/
+backend/.vs/
+backend/.vscode/
+backend/*.user
+backend/*.suo
+backend/*.log
+backend/*.pdb
+backend/*.opendb
+backend/TestResults/
+backend/packages/
+backend/publish/
+backend/build/
+backend/artifacts/
+backend/appsettings.Development.json
+backend/appsettings.json
+
+
+
+
+# Geral
+.DS_Store
+.env
+.env.*
+*.log
+*.sqlite
+*.sqlite3
+*.sublime-project
+*.sublime-workspace
+.idea/
+.project
+.settings/
+.classpath
+
+# Dependências de pacotes
+node_modules/
+
+# Arquivos de sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos de configuração sensíveis
+*.env
+*.pem
+*.key
+
+# Arquivos de cache e temporários
+*.tmp
+*.bak
+*.swp
+*~
+
+# Logs
+logs/
+*.log
+
+# Arquivos de IDE (se não estiverem em .vs/ ou .vscode/)
+*.iml
+.project
+.classpath
+.settings/
+
+# Arquivos de compilação e binários
+bin/
+obj/
+
+# Arquivos de banco de dados
+*.db
+*.sqlite
+*.sqlite3
+
+# Arquivos de upload
+uploads/
+
+# Arquivos de teste
+/coverage/
+.nyc_output/
+
+# Outros
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+
+
