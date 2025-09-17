@@ -5,8 +5,10 @@ create table "Usuario"(
 	"Senha" varchar(255) not null,
 	"CreatedAt" timestamp with time zone default current_timestamp,
 	"NivelAcesso" varchar(50) not null default 'Normal',
-	"DataNascimento" date
+	"DataNascimento" date,
+	"FotoPerfil" varchar(255)
 );
+
 create index idx_user_nome on "Usuario"("Nome");
 create index idx_user_email on "Usuario"("Email");
 create table "RefreshToken"(
@@ -29,8 +31,8 @@ create table "Jogo"(
 	"Titulo" varchar(50) not null,
 	"Descricao" text,
 	"Certificado" bool,
-	"CreatedAt" timestamp with time zone default current_timestamp
-
+	"CreatedAt" timestamp with time zone default current_timestamp,
+	"UrlImg" varchar(255)
 );
 create index idx_jogo_nome on "Jogo"("Titulo");
 
@@ -54,7 +56,8 @@ create table "Mundo"(
 	"TituloMundo" varchar(50) not null,
 	"Descricao" text,
 	"Videolink" varchar(255),
-	"DuracaoMundo" float
+	"DuracaoMundo" float,
+	"UrlImg" varchar(255)
 );
 create index idx_mundo_titulo on "Mundo"("TituloMundo");
 create index idx_mundo_tipo on "Mundo"("TipoMundo");
@@ -66,7 +69,9 @@ create table "Nivel"(
 	"Titulo" varchar(50),
 	"CreatedAt" timestamp with time zone default current_timestamp,
 	"Videolink" varchar(255),
-	"Duracao" float
+	"Duracao" float,
+	"TipoNivel" varchar(50),
+	"UrlImg" varchar(255)
 );
 create index idx_lvl_t on "Nivel"("Titulo");
 
@@ -77,7 +82,8 @@ create table "Desafios"(
 	"NomeDesafio" varchar(50) not null,
 	"Descricao" text,
 	"Videolink" varchar(255),
-	"CreatedAt" timestamp with time zone default current_timestamp
+	"CreatedAt" timestamp with time zone default current_timestamp,
+	"UrlImg" varchar(255)
 );
 create index idx_desafio_nome on "Desafios"("NomeDesafio");
 
@@ -88,5 +94,6 @@ create table "DesafioXUsuario"(
 	constraint fk_dxu_u foreign key ("IDUsuario") references "Usuario"("ID") on delete cascade,
 	constraint fk_dxu_d foreign key ("IDDesafio") references "Desafios"("ID") on delete cascade,
 	"CreatedAt" timestamp with time zone default current_timestamp,
-	"Resposta" text
+	"Resposta" text,
+	"Acertou" bool
 );
