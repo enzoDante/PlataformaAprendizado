@@ -157,11 +157,9 @@ A pesquisa foi realizada através de questionário online estruturado com 10 que
 - **Evolutivo:** Sugestões de otimização
 
 ### Recursos de Suporte
-- Assistente virtual (IA) para dúvidas pontuais
 - Fórum de discussão por tópico
 - Base de conhecimento com artigos e tutoriais
 - Exemplos práticos comentados
-- Videoaulas curtas e objetivas
 
 ---
 
