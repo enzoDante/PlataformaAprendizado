@@ -1,1 +1,124 @@
+🎮 Design de Gamificação para Plataforma de Ensino
 
+Este projeto tem como objetivo o planejamento e detalhamento das funções de gamificação de uma plataforma de aprendizagem de programação, descrevendo suas funcionalidades e estrutura didática.
+
+🧩 Objetivo Geral
+
+Planejar as funções de gamificação de uma plataforma de ensino de programação, descrevendo suas principais funcionalidades e modelo de aprendizado.
+
+👥 Público-Alvo
+
+(Aguardando resultados da pesquisa do setor 2.)
+
+💡 Análise do Problema
+
+Com base na análise das plataformas concorrentes de aprendizado de programação, foram identificadas como funcionalidades essenciais para o MVP (Minimum Viable Product):
+
+Sistema de Cadastro de Usuários
+
+Prototipação do 1º Módulo do Curso
+
+Sistema de Pontuação
+
+Sistema de Reforço de Conteúdos
+
+Sistema de Ranking de Usuários
+
+Essas funcionalidades compõem a base do sistema e permitirão a construção de um protótipo funcional capaz de ilustrar o conceito central da plataforma.
+
+🧭 Modelo Didático: “Trilha de Aprendizagem”
+
+O modelo adotado segue o formato de trilhas temáticas, semelhante ao do Duolingo.
+Cada trilha (ou módulo) agrupa conteúdos específicos e é composta por etapas menores, cada uma com:
+
+Um arquivo introdutório (aula em texto ou vídeo)
+
+10 exercícios práticos baseados no conteúdo apresentado
+
+📚 Módulos do Curso
+
+Fundamentos de Lógica e Sintaxe
+
+Objetivo: Introduzir o aluno ao pensamento lógico e à sintaxe da linguagem de programação.
+
+Etapas:
+
+Pensamento Lógico
+
+Variáveis e Tipos
+
+Operações e Expressões
+
+Condições
+
+Repetições
+
+Funções Básicas
+
+Competências: Entender o funcionamento lógico da máquina e ser capaz de criar programas simples.
+
+Programação Estruturada (a ser desenvolvido)
+
+Programação Orientada a Objetos (a ser desenvolvido)
+
+Manipulação de Dados e Arquivos (a ser desenvolvido)
+
+Desenvolvimento de Projetos (a ser desenvolvido)
+
+Tópicos Avançados e Carreira (a ser desenvolvido)
+
+⚙️ Funcionalidades da Plataforma
+🧾 Sistema de Cadastro de Usuários
+
+Permite criar e manter contas de alunos com:
+
+Nome de Usuário: até 20 caracteres, exibido publicamente e editável.
+
+Email: usado para autenticação e recuperação de senha, com confirmação via mensagem.
+
+Senha: entre 8 e 20 caracteres, com letras, números e caracteres especiais.
+
+A tela de login solicita Nome de Usuário e Senha e valida os dados no banco de dados para liberar o acesso.
+
+🎓 Prototipação do 1º Módulo
+
+O primeiro módulo implementado será “Fundamentos de Lógica e Sintaxe”, servindo como base para o restante do curso.
+
+🏆 Sistema de Pontuação
+
+Cada etapa concluída com sucesso concede 10 pontos.
+O aluno define uma meta diária entre 10 e 30 pontos para se manter motivado.
+
+O progresso é interrompido após 3 erros consecutivos, e o aluno só pode retomar após um tempo de espera — simulando um sistema de “vidas”.
+
+🔁 Sistema de Reforço de Conteúdos
+
+Implementa uma lógica de revisão inteligente:
+
+Cada exercício possui uma tag de conteúdo.
+
+Se o aluno errar repetidamente questões com a mesma tag, o sistema aciona uma fase bônus de revisão, reforçando o aprendizado sobre aquele tema específico.
+
+🏅 Sistema de Ranking de Usuários
+
+(Descrição detalhada será incluída na próxima etapa de desenvolvimento.)
+
+🧠 Estrutura Técnica
+
+O projeto prevê uma arquitetura modular, com foco em escalabilidade e facilidade de expansão das funcionalidades de gamificação.
+
+🚀 Próximos Passos
+
+Definição completa do público-alvo
+
+Implementação do protótipo funcional do primeiro módulo
+
+Testes de usabilidade e engajamento
+
+Adição de novas mecânicas de gamificação
+
+🖋️ Autoria
+
+Amora Marinho Machado
+Projeto desenvolvido para a disciplina de Iniciação Científica
+Pontifícia Universidade Católica de São Paulo – 2025
