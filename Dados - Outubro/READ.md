@@ -81,15 +81,15 @@ A pesquisa foi realizada através de questionário online estruturado com 10 que
 - ✅ Educativo, explicando o porquê das correções
 
 ### Funcionalidades Essenciais
-- 📝 Exercícios práticos com aplicação imediata
-- 📚 Material teórico organizado por módulos
-- 💬 Sistema de dúvidas (IA, fórum, chat)
-- 🎯 Exemplos práticos contextualizados
-- ⚡ Feedback instantâneo e correção automática
-- 🎮 Gamificação (pontos, badges, leaderboard)
-- 🔄 Flashcards para revisão
-- 📈 Plano de desenvolvimento personalizado
-- 🔥 Sistema de streak diário
+-  Exercícios práticos com aplicação imediata
+-  Material teórico organizado por módulos
+-  Sistema de dúvidas (IA, fórum, chat)
+-  Exemplos práticos contextualizados
+-  Feedback instantâneo e correção automática
+-  Gamificação (pontos, badges, leaderboard)
+-  Flashcards para revisão
+-  Plano de desenvolvimento personalizado
+-  Sistema de streak diário
 
 ### Certificações Valorizadas
 - Reconhecidas pelo mercado (AWS, SAP)
@@ -181,7 +181,3 @@ As principais dificuldades (lógica de programação, algoritmos e conceitos com
 ---
 
 
-
-Para mais informações sobre o projeto, entre em contato através da Pontifícia Universidade Católica de São Paulo.
-
-**Desenvolvido com 💜 na PUC-SP**
