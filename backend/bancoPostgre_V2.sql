@@ -56,12 +56,12 @@ create table user_achievements(
 	constraint fk_user_achievement_achid foreign key (achievement_id) references achievements(id)
 );
 
- -- ==============================query executada até aqui ==============================
 create table game(
 	id int generated always as identity primary key,
 	tittle varchar(50) not null,
 	description text,
 	certification bool,
+	dificult varchar(50) default 'Iniciante',
 	created_at timestamp with time zone default current_timestamp,
 	url_img text
 );
@@ -73,7 +73,7 @@ create table users_games(
 	game_id int not null,
 	unique (user_id, game_id),
 	creator bool default false,
-	dificult varchar(50) default 'Iniciante',
+	complete bool default false,
 	created_at timestamp with time zone default current_timestamp,
 	constraint fk_usersgames_userid foreign key (user_id) references users(id) on delete cascade,
 	constraint fk_usersgames_gameid foreign key (game_id) references game(id) on delete cascade
@@ -108,6 +108,7 @@ create table class_level(
 	updated_at timestamp with time zone default current_timestamp,
 	constraint fk_class_secid foreign key (section_id) references sections(id) on delete cascade
 );
+
 -- se "class_level" é um "lesson" usuário irá responder na tabela abaixo
 create table user_lesson(
 	id int generated always as identity primary key,
@@ -117,6 +118,7 @@ create table user_lesson(
 	user_resolution text not null,
 	experience int default 0,
 	anwser_correct bool default false,
+	complete bool default false,
 	created_at timestamp with time zone default current_timestamp,
 	updated_at timestamp with time zone default current_timestamp,
 	constraint fk_userlesson_userid foreign key (user_id) references users(id) on delete cascade,
