@@ -1,0 +1,15 @@
+﻿namespace server_api.Models
+{
+    public class UsersGames
+    {
+        public int Id { get; set; }
+        public int UserId { get; set; }
+        public virtual Users Users { get; set; } = null!;
+        public int GameId { get; set; }
+        public virtual Game Game { get; set; } = null!;
+
+        public bool Creator { get; set; }
+        public bool Complete { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+}
