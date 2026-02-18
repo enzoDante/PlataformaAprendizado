@@ -21,7 +21,6 @@
 
   <ItemGroup>
     <Folder Include="DTOs\" />
-    <Folder Include="Commons\" />
     <Folder Include="Services\" />
   </ItemGroup>
 
