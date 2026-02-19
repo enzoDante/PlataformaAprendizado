@@ -38,52 +38,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="pythonWorld"
-        options={{
-          title: 'Python World',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="book.pages.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="javaWorld"
-        options={{
-          title: 'Java World',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="book.pages.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="cWorld"
-        options={{
-          title: 'C World',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="book.pages.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="logicWorld"
-        options={{
-          title: 'Logic World',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="book.pages.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="register"
-        options={{
-          title: 'Register',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.crop.circle.fill.badge.plus" color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.crop.circle.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="register"
-        options={{
-          title: 'Register',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.crop.circle.fill.badge.plus" color={color} />,
         }}
       />
       
