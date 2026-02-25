@@ -2,8 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using server_api.Context;
 using Microsoft.OpenApi.Models;
 using server_api.Services.Authentication;
-using server_api.Mappings;
-using AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,6 +77,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+// se usar proxy reverso
+//app.UseForwardedHeaders();
+//builder.Services.Configure<ForwardedHeadersOptions>(option =>
+//{
+//    option.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
+//});
 
 app.UseHttpsRedirection();
 

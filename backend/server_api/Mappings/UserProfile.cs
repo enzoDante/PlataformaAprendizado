@@ -8,6 +8,9 @@ namespace server_api.Mappings
         public UserProfile()
         {
             CreateMap<Users, UserResponseDTO>();
+            CreateMap<Users, UserAndTokenResponseDTO>()
+                .IncludeBase<Users, UserResponseDTO>();
+
             CreateMap<UserSignUpRequest, Users>();
         }
     }
