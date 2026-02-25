@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using server_api.Context;
 using Microsoft.OpenApi.Models;
+using server_api.Services.Authentication;
+using server_api.Mappings;
+using AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +13,11 @@ builder.Services.AddDbContext<ContextDB>(options =>
 );
 
 // Add services to the container.
+builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<AuthService>();
+
+// Add mappers to container
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddControllers();
 // get user ip

@@ -1,4 +1,7 @@
-﻿using server_api.Context;
+﻿using server_api.Commons;
+using server_api.Context;
+using server_api.DTOs.UserDTOs;
+using server_api.Models;
 
 namespace server_api.Services.Authentication
 {
@@ -16,6 +19,32 @@ namespace server_api.Services.Authentication
             _configuration = configuration;
             _refreshTokenExpirationDays = int.Parse(_configuration["JwtSettings:RefreshTokenExpirationInDays"] ?? "7");
         }
-        // fazer o sistema de login e autenticação
+
+        public async Task<UserResponseDTO?> SignUpUser(UserSignUpRequest request, bool isMobile = false)
+        {
+            // validação de dados e senha
+            
+            UserDataValidator.ValidatePassword(request.Password);
+
+            Users user = new Users
+            {
+                Username = request.Username,
+                Email = request.Email,
+                Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                Birthdate = request.BirthDate
+            };
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+            return new UserResponseDTO
+            {
+                Id = user.Id,
+                PublicId = user.PublicId,
+                Username = user.Username,
+                Email = user.Email,
+                Birthdate = user.Birthdate
+            };
+        }
+
+        
     }
 }
