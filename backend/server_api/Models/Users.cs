@@ -3,12 +3,12 @@
     public class Users
     {
         public int Id { get; set; }
-        public Guid PublicId { get; set; }
+        public Guid PublicId { get; set; } // = Guid.NewGuid(); no caso vou mexer no Configuration banco
         public string Username { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
         public string Email {  get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
-        public string AccessLevel { get; set; } = "User";
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public string AccessLevel { get; set; } = "Normal";
         public DateOnly Birthdate {  get; set; }
 
         public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();

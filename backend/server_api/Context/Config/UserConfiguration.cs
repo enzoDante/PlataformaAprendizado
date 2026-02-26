@@ -13,6 +13,8 @@ namespace server_api.Context.Config
 
             builder.HasIndex(x => x.PublicId);
 
+            builder.Property(u => u.PublicId).HasDefaultValueSql("gen_random_uuid()").ValueGeneratedOnAdd();
+
             builder.HasMany(x => x.RefreshTokens)
                 .WithOne(x => x.Users)
                 .HasForeignKey(x => x.UserId)

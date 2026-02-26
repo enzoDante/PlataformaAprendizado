@@ -45,7 +45,7 @@ namespace server_api.Services.Authentication
             userTokenResp.RefreshToken = refreshTokenGen;
             userTokenResp.ExpiresIn = _jwtService.GetAccessTokenExpirationTime();
 
-            AddRefreshTokenToDatabase(user.Id, refreshTokenGen, GetUserIP());
+            await AddRefreshTokenToDatabase(user.Id, refreshTokenGen, GetUserIP());
             return userTokenResp;
         }
 
@@ -57,7 +57,7 @@ namespace server_api.Services.Authentication
             string accessToken = _jwtService.GenerateAccessToken(user);
             string refreshToken = _jwtService.GenerateRefreshToken();
 
-            AddRefreshTokenToDatabase(user.Id, refreshToken, userIp);
+            await AddRefreshTokenToDatabase(user.Id, refreshToken, userIp);
             return new UserAndTokenResponseDTO
             {
                 Id = user.Id,
@@ -133,7 +133,7 @@ namespace server_api.Services.Authentication
             return reftoken.Token.ToString();
         }
 
-        private async void AddRefreshTokenToDatabase(int userId, string refreshToken, string? userIp)
+        private async Task AddRefreshTokenToDatabase(int userId, string refreshToken, string? userIp)
         {
             RefreshToken refreshTokenEntity = new RefreshToken
             {
@@ -143,7 +143,7 @@ namespace server_api.Services.Authentication
                 IpAddress = userIp ?? ""
             };
             _context.RefreshTokens.Add(refreshTokenEntity);
-            await _context.SaveChangesAsync();
+            //await _context.SaveChangesAsync();
             // deletar os refresh tokens expirados/revogados
              await RemoveExpiredRefreshTokenAsync(userId);
         }
@@ -154,8 +154,8 @@ namespace server_api.Services.Authentication
             if(expiredTokens.Any())
             {
                 _context.RefreshTokens.RemoveRange(expiredTokens);
-                await _context.SaveChangesAsync();
             }
+            await _context.SaveChangesAsync();
         }
 
         private string? GetUserIP()

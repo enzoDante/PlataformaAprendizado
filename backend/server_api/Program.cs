@@ -1,7 +1,11 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using server_api.Context;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using server_api.Context;
+using server_api.Mappings;
 using server_api.Services.Authentication;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +19,79 @@ builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthService>();
 
 // Add mappers to container
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+//builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddAutoMapper(cfg =>
+{
+    //cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
+    cfg.AddProfile<UserProfile>();
+});
+
+// CONFIGURAÇÃO DO JWT
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var secretKey = jwtSettings["SecretKey"] ?? throw new ArgumentNullException("SecretKey não configurado");
+var issuer = jwtSettings["Issuer"] ?? throw new ArgumentNullException("Issuer não configurado");
+var audience = jwtSettings["Audience"] ?? throw new ArgumentNullException("Audience não configurado");
+// Converte a chave secreta para bytes
+var key = Encoding.UTF8.GetBytes(secretKey);
+// Configura a autenticação JWT
+builder.Services.AddAuthentication(options =>
+{
+    //Define JWT Bearer como esquema padrão de autenticação
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+    .AddJwtBearer(options =>
+    {
+        //Configurações do JWT Bearer
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true, // valida chave de assinatura
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateIssuer = true, // valida o emissor (quem criou o token)
+            ValidIssuer = issuer,
+            ValidateAudience = true, //valida a audiência (para quem o token é destinado)
+            ValidAudience = audience,
+            ValidateLifetime = true, //valida o tempo de vida do token
+            ClockSkew = TimeSpan.Zero, // remove a tolerância de tempo padrão (5 minutos)
+            RequireExpirationTime = true //Define onde buscar o token no header da requisição
+        };
+
+        //Configurações para desenvolvimento/debug
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context => // isso aqui era para o [Authorize] ler o jwt do cookie
+            {
+                if (context.Request.Cookies.TryGetValue("jwt", out string? jwtToken))
+                {
+                    context.Token = jwtToken;
+                }
+                return Task.CompletedTask;
+            },
+            OnAuthenticationFailed = context =>
+            {
+                //Log de falha na autenticação (útil para debug)
+                Console.WriteLine($"Falha na autenticação: {context.Exception.Message}");
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                //Log de token validado com sucesso (útil para debug)
+                Console.WriteLine("Token validado com sucesso");
+                return Task.CompletedTask;
+            }
+        };
+    });
+// CONFIGURAÇÃO DA AUTORIZAÇÃO
+// Adiciona políticas de autorização
+builder.Services.AddAuthorization(options =>
+{
+    // política para admin
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+
+    // política para usuários autenticados
+    options.AddPolicy("AuthenticatedUser", policy => policy.RequireAuthenticatedUser());
+});
 
 builder.Services.AddControllers();
 // get user ip

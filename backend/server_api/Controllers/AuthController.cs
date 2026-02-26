@@ -4,6 +4,7 @@ using server_api.Commons;
 using server_api.DTOs.UserDTOs;
 using server_api.Helpers;
 using server_api.Services.Authentication;
+using System.Security.Claims;
 
 namespace server_api.Controllers
 {
@@ -92,6 +93,44 @@ namespace server_api.Controllers
             return BadRequest("Erro ao sair da conta");
         }
 
+        [HttpPost("Revoke"), Authorize]
+        public async Task<IActionResult> RevokeToken(RefreshTokenRequest request)
+        {
+            var response = await _authService.RevokeRefreshTokenAsync(request.RefreshToken);
+            if (!response) return NotFound("Token não encontrado ou ja revogado");
+
+            return NoContent();
+        }
+
+        [HttpPost("Revoke/All"), Authorize]
+        public async Task<IActionResult> RevokeAllToken()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId)) return Unauthorized("Token inválido");
+            await _authService.RevokeAllUserTokenAsync(userId);
+            return NoContent();
+        }
+
+        [HttpGet("me"), Authorize]
+        public IActionResult GetCurrentUser()
+        {
+            try
+            {
+                UserResponseDTO user = new UserResponseDTO
+                {
+                    Username = User.FindFirst(ClaimTypes.Name)?.Value ?? "errado",
+                    AccessLevel = User.FindFirst(ClaimTypes.Role)?.Value ?? "errou",
+                    Email = User.FindFirst(ClaimTypes.Email)?.Value ?? "email erro",
+                    Id = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0")
+                };
+
+                return Ok(user);
+            }
+            catch
+            {
+                return Unauthorized("Deu errado");
+            }
+        }
 
     }
 }
