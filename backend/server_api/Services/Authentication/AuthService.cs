@@ -29,8 +29,10 @@ namespace server_api.Services.Authentication
         public async Task<UserResponseDTO?> SignUpUser(UserSignUpRequest request)
         {
             // validação de dados e senha
-            
+
+            UserDataValidator.ValidateEmail(request.Email);
             UserDataValidator.ValidatePassword(request.Password);
+            
 
             Users user = _mapper.Map<Users>(request); // converte DTO para o Model
             user.Password = BCrypt.Net.BCrypt.HashPassword(request.Password);

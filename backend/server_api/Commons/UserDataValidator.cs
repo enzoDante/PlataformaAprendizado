@@ -17,6 +17,11 @@ namespace server_api.Commons
             };
             if(!userPassValidate.Validate) throw new InvalidPasswordException(userPassValidate);
         }
+        public static void ValidateEmail(string email)
+        {
+            if (!Regex.IsMatch(email, @"[\w\-_\+]+@[\w]+.[\w]+")) 
+                throw new ArgumentException("Email inválido");
+        }
     }
     public class PasswordDTO
     {
