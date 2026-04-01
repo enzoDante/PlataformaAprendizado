@@ -7,13 +7,16 @@ import {
   TouchableOpacity,
   StyleSheet,
   StatusBar,
+  ActivityIndicator,
 } from "react-native";
 import { GlobalStyles, Colors, Typography, Spacing, Radii } from "../styles/GlobalStyles";
 import { router } from "expo-router";
+import { signUp } from "../services/authService"; // ajuste o caminho se necessário
 
 type Gender = "male" | "female" | "other" | "prefer_not" | null;
 
 interface FormData {
+  username: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -24,6 +27,8 @@ interface FormData {
   birthYear: string;
   gender: Gender;
   showPassword: boolean;
+  isLoading: boolean;
+  apiError: string;
   errors: Record<string, string>;
 }
 
@@ -36,6 +41,7 @@ const GENDER_OPTIONS: { label: string; value: Gender }[] = [
 
 export default class Register extends React.Component<{}, FormData> {
   state: FormData = {
+    username: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -46,6 +52,8 @@ export default class Register extends React.Component<{}, FormData> {
     birthYear: "",
     gender: null,
     showPassword: false,
+    isLoading: false,
+    apiError: "",
     errors: {},
   };
 
@@ -54,7 +62,7 @@ export default class Register extends React.Component<{}, FormData> {
   };
 
   setField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
-    this.setState({ [field]: value } as Pick<FormData, K>, () => {
+    this.setState({ [field]: value, apiError: "" } as unknown as Pick<FormData, K | "apiError">, () => {
       if (this.state.errors[field as string]) {
         const errors = { ...this.state.errors };
         delete errors[field as string];
@@ -64,25 +72,83 @@ export default class Register extends React.Component<{}, FormData> {
   };
 
   validate = (): boolean => {
-    const { firstName, lastName, email, password, confirmPassword, birthDay, birthMonth, birthYear, gender } = this.state;
+    const {
+      username,
+      firstName,
+      lastName,
+      email,
+      password,
+      confirmPassword,
+      birthDay,
+      birthMonth,
+      birthYear,
+      gender,
+    } = this.state;
     const errors: Record<string, string> = {};
+
+    if (!username.trim()) errors.username = "Informe um nome de usuário";
+    else if (username.trim().length < 3) errors.username = "Username deve ter no mínimo 3 caracteres";
+    else if (/\s/.test(username)) errors.username = "Username não pode ter espaços";
 
     if (!firstName.trim()) errors.firstName = "Informe o nome";
     if (!lastName.trim()) errors.lastName = "Informe o sobrenome";
     if (!email.includes("@")) errors.email = "Informe um e-mail válido";
     if (password.length < 8) errors.password = "A senha deve ter no mínimo 8 caracteres";
     if (password !== confirmPassword) errors.confirmPassword = "As senhas não coincidem";
-    if (!birthDay || !birthMonth || !birthYear || birthYear.length < 4)
+
+    const day = parseInt(birthDay, 10);
+    const month = parseInt(birthMonth, 10);
+    const year = parseInt(birthYear, 10);
+    const currentYear = new Date().getFullYear();
+
+    if (
+      !birthDay || !birthMonth || !birthYear ||
+      birthYear.length < 4 ||
+      isNaN(day) || isNaN(month) || isNaN(year) ||
+      day < 1 || day > 31 ||
+      month < 1 || month > 12 ||
+      year < 1900 || year > currentYear
+    ) {
       errors.birthDate = "Informe uma data de nascimento válida";
+    }
+
     if (!gender) errors.gender = "Selecione seu gênero";
 
     this.setState({ errors });
     return Object.keys(errors).length === 0;
   };
 
-  handleSubmit = () => {
-    if (this.validate()) {
-      console.log("Registro enviado:", this.state);
+  handleSubmit = async () => {
+    if (!this.validate()) return;
+
+    const { username, firstName, lastName, email, password, birthDay, birthMonth, birthYear } = this.state;
+
+    // Monta a data como objeto Date local para evitar problemas de timezone
+    const birthdate = new Date(
+      parseInt(birthYear, 10),
+      parseInt(birthMonth, 10) - 1, // mês é 0-indexed
+      parseInt(birthDay, 10)
+    );
+
+    // O backend espera "username" — usamos o campo dedicado.
+    // firstName e lastName são exibidos na tela mas não enviados separadamente.
+    // Ajuste abaixo se o backend vier a suportar esses campos futuramente.
+    const fullUsername = username.trim();
+
+    this.setState({ isLoading: true, apiError: "" });
+
+    try {
+      await signUp(fullUsername, email.trim(), password, birthdate);
+      // Cadastro bem-sucedido — redireciona para login para o usuário autenticar
+      router.replace("/login");
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Ocorreu um erro. Tente novamente.";
+      this.setState({ apiError: message });
+    } finally {
+      this.setState({ isLoading: false });
     }
   };
 
@@ -96,10 +162,11 @@ export default class Register extends React.Component<{}, FormData> {
       secureTextEntry?: boolean;
       maxLength?: number;
       flex?: number;
+      autoCorrect?: boolean;
     } = {}
   ) => {
     const value = this.state[field] as string;
-    const error = this.state.errors[field];
+    const error = this.state.errors[field as string];
 
     return (
       <View style={[GlobalStyles.inputWrapper, options.flex ? { flex: options.flex } : null]}>
@@ -112,9 +179,10 @@ export default class Register extends React.Component<{}, FormData> {
           onChangeText={(v) => this.setField(field, v as any)}
           keyboardType={options.keyboardType ?? "default"}
           autoCapitalize={options.autoCapitalize ?? "sentences"}
-          autoCorrect={false}
+          autoCorrect={options.autoCorrect ?? false}
           secureTextEntry={options.secureTextEntry}
           maxLength={options.maxLength}
+          editable={!this.state.isLoading}
         />
         {!!error && <Text style={GlobalStyles.inputErrorText}>{error}</Text>}
       </View>
@@ -122,7 +190,18 @@ export default class Register extends React.Component<{}, FormData> {
   };
 
   render() {
-    const { birthDay, birthMonth, birthYear, gender, showPassword, password, confirmPassword, errors } = this.state;
+    const {
+      birthDay,
+      birthMonth,
+      birthYear,
+      gender,
+      showPassword,
+      password,
+      confirmPassword,
+      errors,
+      isLoading,
+      apiError,
+    } = this.state;
 
     return (
       <View style={GlobalStyles.screen}>
@@ -144,8 +223,21 @@ export default class Register extends React.Component<{}, FormData> {
           <Text style={styles.pageTitle}>Criar conta</Text>
           <Text style={styles.pageSubtitle}>Preencha os dados abaixo para começar a aprender</Text>
 
-          {/* ── Seção: Nome ── */}
+          {/* Erro global da API */}
+          {!!apiError && (
+            <View style={styles.apiErrorBox}>
+              <Text style={styles.apiErrorText}>{apiError}</Text>
+            </View>
+          )}
+
+          {/* ── Seção: Identificação ── */}
           <Text style={styles.sectionLabel}>Identificação</Text>
+
+          {/* Username */}
+          {this.renderInput("username", "Nome de usuário", "ex: ana_silva", {
+            autoCapitalize: "none",
+            autoCorrect: false,
+          })}
 
           <View style={styles.row}>
             {this.renderInput("firstName", "Nome", "Ana", {
@@ -183,10 +275,12 @@ export default class Register extends React.Component<{}, FormData> {
                 onChangeText={(v) => this.setField("password", v)}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
+                editable={!isLoading}
               />
               <TouchableOpacity
                 style={styles.eyeBtn}
                 onPress={() => this.setState((s) => ({ showPassword: !s.showPassword }))}
+                disabled={isLoading}
               >
                 <Text style={styles.eyeIcon}>{showPassword ? "🙈" : "👁️"}</Text>
               </TouchableOpacity>
@@ -210,6 +304,7 @@ export default class Register extends React.Component<{}, FormData> {
               onChangeText={(v) => this.setField("confirmPassword", v)}
               secureTextEntry={!showPassword}
               autoCapitalize="none"
+              editable={!isLoading}
             />
             {!!errors.confirmPassword && (
               <Text style={GlobalStyles.inputErrorText}>{errors.confirmPassword}</Text>
@@ -236,6 +331,7 @@ export default class Register extends React.Component<{}, FormData> {
                 keyboardType="numeric"
                 maxLength={2}
                 textAlign="center"
+                editable={!isLoading}
               />
               <Text style={styles.dateSep}>/</Text>
               <TextInput
@@ -251,6 +347,7 @@ export default class Register extends React.Component<{}, FormData> {
                 keyboardType="numeric"
                 maxLength={2}
                 textAlign="center"
+                editable={!isLoading}
               />
               <Text style={styles.dateSep}>/</Text>
               <TextInput
@@ -266,6 +363,7 @@ export default class Register extends React.Component<{}, FormData> {
                 keyboardType="numeric"
                 maxLength={4}
                 textAlign="center"
+                editable={!isLoading}
               />
             </View>
             {!!errors.birthDate && (
@@ -285,6 +383,7 @@ export default class Register extends React.Component<{}, FormData> {
                     style={[styles.genderChip, active && styles.genderChipActive]}
                     onPress={() => this.setField("gender", opt.value)}
                     activeOpacity={0.75}
+                    disabled={isLoading}
                   >
                     <Text style={[styles.genderChipText, active && styles.genderChipTextActive]}>
                       {opt.label}
@@ -300,18 +399,26 @@ export default class Register extends React.Component<{}, FormData> {
 
           {/* Submit */}
           <TouchableOpacity
-            style={[GlobalStyles.buttonPrimary, styles.submitBtn]}
+            style={[
+              GlobalStyles.buttonPrimary,
+              styles.submitBtn,
+              isLoading && styles.buttonDisabled,
+            ]}
             onPress={this.handleSubmit}
             activeOpacity={0.85}
+            disabled={isLoading}
           >
-            <Text style={GlobalStyles.buttonPrimaryText}>Criar conta</Text>
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={GlobalStyles.buttonPrimaryText}>Criar conta</Text>
+            )}
           </TouchableOpacity>
 
           {/* Link para login */}
           <View style={[GlobalStyles.row, styles.loginRow]}>
             <Text style={styles.loginText}>Já tem uma conta? </Text>
-            <TouchableOpacity
-            onPress={this.handleLogin}>
+            <TouchableOpacity onPress={this.handleLogin} disabled={isLoading}>
               <Text style={GlobalStyles.link}>Entrar</Text>
             </TouchableOpacity>
           </View>
@@ -363,6 +470,19 @@ const styles = StyleSheet.create({
     fontSize: Typography.sm,
     color: Colors.textSecondary,
     marginBottom: Spacing.xl,
+  },
+
+  // Erro global da API
+  apiErrorBox: {
+    backgroundColor: "#FEE2E2",
+    borderRadius: Radii.sm ?? 6,
+    padding: Spacing.base,
+    marginBottom: Spacing.base,
+  },
+  apiErrorText: {
+    color: "#B91C1C",
+    fontSize: Typography.sm,
+    textAlign: "center",
   },
 
   // Section label
@@ -448,6 +568,9 @@ const styles = StyleSheet.create({
   submitBtn: {
     marginTop: Spacing.xs,
     marginBottom: Spacing.lg,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
 
   // Login row

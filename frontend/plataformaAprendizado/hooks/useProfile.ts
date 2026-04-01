@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Alert } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -107,14 +109,25 @@ export function useProfile(): UseProfileReturn {
 
   const toggleShowPassword = () => setShowPassword((prev) => !prev);
 
+  const router = useRouter();
+
   const logout = () =>
     Alert.alert("Sair", "Deseja realmente sair da sua conta?", [
       { text: "Cancelar", style: "cancel" },
       {
         text: "Sair",
         style: "destructive",
-        onPress: () => console.log("Logout"),
-      },
+        onPress: () => async () => {
+          try {
+            // Remove token ou dados de sessão
+            await AsyncStorage.removeItem("authToken");
+            // Redireciona para a tela de login
+            router.replace("/login");
+          } catch (error) {
+            console.error("Erro ao fazer logout:", error);
+          }
+      }
+    },
     ]);
 
   return {
