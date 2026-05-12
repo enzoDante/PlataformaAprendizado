@@ -1,8 +1,13 @@
 ﻿namespace server_api.DTOs.GameDTOs
 {
-    public class WorldDTO
+    public class WorldDTO : GameResponse
     {
-        public GameDTOs.GameResponse Game { get; set; } = null!;
-        public SectionsResponse Section { get; set; } = null!;
+        public List<SectionsResponse> Section { get; set; } = new();
+    }
+
+    public class SectionDetailResponse
+    {
+        public int Id { get; set; }
+        public List<ClassResponse> ClassResponse { get; set; } = new();
     }
 }

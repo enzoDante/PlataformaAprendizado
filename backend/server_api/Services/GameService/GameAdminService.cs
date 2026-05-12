@@ -108,6 +108,8 @@ namespace server_api.Services.GameService
             section.MediaDuration = request.MediaDuration ?? section.MediaDuration;
             section.ImageUrl = request.ImageUrl ?? section.ImageUrl;
 
+            section.UpdatedAt = DateTime.UtcNow;
+
             await _context.SaveChangesAsync();
 
             return _mapper.Map<SectionsResponse>(section);
@@ -149,6 +151,8 @@ namespace server_api.Services.GameService
             level.ImageUrl = request.ImageUrl ?? level.ImageUrl;
             level.Experience = request.Experience ?? level.Experience;
             level.IsLesson = request.IsLesson ?? level.IsLesson;
+
+            level.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return _mapper.Map<ClassResponse>(level);

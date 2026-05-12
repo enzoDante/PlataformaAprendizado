@@ -23,6 +23,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserJWTGet>();
 builder.Services.AddScoped<ProfileService>();
 builder.Services.AddScoped<GameAdminService>();
+builder.Services.AddScoped<GameUserService>();
 
 // Add mappers to container
 //builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());

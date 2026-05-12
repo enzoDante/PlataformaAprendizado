@@ -8,8 +8,8 @@
         public int GameId { get; set; }
         public virtual Game Game { get; set; } = null!;
 
-        public bool Creator { get; set; }
-        public bool Complete { get; set; }
+        public bool Creator { get; set; } = false;
+        public bool Complete { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }
