@@ -7,11 +7,11 @@ namespace server_api.Mappings
     {
         public UserProfile()
         {
-            CreateMap<Users, UserResponseDTO>();
-            CreateMap<Users, UserAndTokenResponseDTO>()
+            CreateMap<Users, UserResponseDTO>(); // Mapeamento de Users para UserResponseDTO
+            CreateMap<Users, UserAndTokenResponseDTO>() // Mapeamento de Users para UserAndTokenResponseDTO, incluindo as propriedades do UserResponseDTO
                 .IncludeBase<Users, UserResponseDTO>();
 
-            CreateMap<UserSignUpRequest, Users>();
+            CreateMap<UserSignUpRequest, Users>(); // Mapeamento para criar um novo usuário a partir do DTO de cadastro
         }
     }
 }

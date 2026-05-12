@@ -6,6 +6,7 @@ using server_api.Commons;
 using server_api.Context;
 using server_api.Mappings;
 using server_api.Services.Authentication;
+using server_api.Services.GameService;
 using server_api.Services.UserService;
 using System.Text;
 
@@ -21,6 +22,7 @@ builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserJWTGet>();
 builder.Services.AddScoped<ProfileService>();
+builder.Services.AddScoped<GameAdminService>();
 
 // Add mappers to container
 //builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());

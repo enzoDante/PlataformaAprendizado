@@ -12,8 +12,8 @@
         public int experience { get; set; }
         public bool AnwserCorrect { get; set; }
         public bool Complete {  get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     }
 }

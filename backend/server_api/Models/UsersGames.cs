@@ -10,6 +10,6 @@
 
         public bool Creator { get; set; }
         public bool Complete { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

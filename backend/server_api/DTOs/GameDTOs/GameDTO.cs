@@ -19,4 +19,12 @@
         public DateTime CreatedAt { get; set; }
         public string UrlImg { get; set; } = string.Empty;
     }
+    public class UpdateGameRequest
+    {
+        public string? Tittle { get; set; }
+        public string? Description { get; set; }
+        public bool? Certification { get; set; }
+        public string? Dificult { get; set; }
+        public string? UrlImg { get; set; }
+    }
 }
