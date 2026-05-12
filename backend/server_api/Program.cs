@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using server_api.Commons;
 using server_api.Context;
 using server_api.Mappings;
 using server_api.Services.Authentication;
+using server_api.Services.UserService;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +19,8 @@ builder.Services.AddDbContext<ContextDB>(options =>
 // Add services to the container.
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<UserJWTGet>();
+builder.Services.AddScoped<ProfileService>();
 
 // Add mappers to container
 //builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
