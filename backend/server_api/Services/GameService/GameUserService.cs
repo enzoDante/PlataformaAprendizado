@@ -62,26 +62,64 @@ namespace server_api.Services.GameService
             {
                 query = query.Where(g => g.Certification == searchCertification.Value);
             }
-            if (myGames != null)
+            if (myGames.HasValue)
             {
-                if (myGames.Value)
-                {
-                    query = query.Where(g => g.UsersGames.Any(ug => ug.UserId == _userId));
-                }
-                else
-                {
-                    query = query.Where(g => !g.UsersGames.Any(ug => ug.UserId == _userId));
-                }
+                query = myGames.Value
+                    ? query.Where(g => g.UsersGames.Any(ug => ug.UserId == _userId))
+                    : query.Where(g => !g.UsersGames.Any(ug => ug.UserId == _userId));
             }
             if (searchCreatedAt.HasValue)
             {
-                query = query.Where(g => g.CreatedAt.Date == searchCreatedAt.Value.Date);
+                DateTime date = searchCreatedAt.Value;
+                query = query.Where(g => g.CreatedAt >= date && g.CreatedAt < date.AddDays(1));
             }
 
             PageResponse<Game> pagedGames = await query.ToPagedListAsync(request);
 
             var gameResponse = pagedGames.Items.Select(g => _mapper.Map<GameResponse>(g)); //.ToList()
             return new PageResponse<GameResponse>(gameResponse, pagedGames.Metadata);
+        }
+
+        public async Task<WorldDTO> GetGameAndSections(int gameId)
+        {
+            // game get e junto com todas as sections do jogo
+            Game? gameSection = await _context.Games.Include(g => g.Sections)
+                .FirstOrDefaultAsync(g => g.Id == gameId);
+
+            if (gameSection == null) throw new ArgumentException("Jogo não encontrado");
+
+            return _mapper.Map<WorldDTO>(gameSection); // retorna o jogo com as seções mapeadas para o DTO WorldDTO
+
+
+        }
+
+        public async Task<IEnumerable<ClassResponse>> GetSectionClasses(int sectionId)
+        {
+            List<ClassLevel> classes = await _context.ClassLevels.Where(g => g.SectionId == sectionId).ToListAsync();
+
+            return classes.Select(c => _mapper.Map<ClassResponse>(c)); // retorna as classes mapeadas para o DTO ClassResponse
+        }
+
+        public async Task<bool> ClassCompleted(int classId) //caso a classe já tenha sido completada, retorna true, caso contrário, cria um registro de UserLesson para o usuário e retorna false
+        {
+            ClassLevel? classLevel = await _context.ClassLevels.Include(g => g.UserLessons).FirstOrDefaultAsync(g => g.Id == classId);
+            if(classLevel == null) throw new ArgumentException("Classe não encontrada");
+            UserLesson? userLesson = classLevel.UserLessons.FirstOrDefault(g => g.UserId == _userId);
+            if (userLesson != null)
+            {
+                userLesson.Complete = true;
+                await _context.SaveChangesAsync();
+                return true; // se o usuário já tiver completado a classe, retorna true
+            }
+            userLesson = new UserLesson
+            {
+                UserId = _userId,
+                ClassId = classId,
+                Complete = false
+            };
+            _context.UsersLessons.Add(userLesson);
+            await _context.SaveChangesAsync();
+            return false;
         }
         // criar os métodos que retornam qualquer informação do jogo, como as seções, as classes, etc. para o usuário poder acessar
 

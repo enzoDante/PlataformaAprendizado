@@ -12,6 +12,7 @@ namespace server_api.DTOs.GameDTOs
         public float MediaDuration { get; set; }
         public string ImageUrl { get; set; } = string.Empty;
         public int Experience { get; set; }
+        public int Priority { get; set; } = 1;
         public bool IsLesson { get; set; } // caso seja true --> é uma atividade para responder
         public string? Answer { get; set; } // resposta para o desafio, caso seja um desafio
     }
@@ -27,6 +28,7 @@ namespace server_api.DTOs.GameDTOs
         public string ImageUrl { get; set; } = string.Empty;
         public int Experience { get; set; }
         public bool IsLesson { get; set; } // caso seja true --> é uma atividade para responder
+        public int Priority { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }
@@ -40,5 +42,6 @@ namespace server_api.DTOs.GameDTOs
         public int? Experience { get; set; }
         public bool? IsLesson { get; set; } // caso seja true --> é uma atividade para responder
         public string? Answer { get; set; } // resposta para o desafio, caso seja um desafio
+        public int? Priority { get; set; }
     }
 }

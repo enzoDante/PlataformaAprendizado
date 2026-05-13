@@ -16,6 +16,9 @@ namespace server_api.Mappings
 
             CreateMap<CreateClassRequest, ClassLevel>();
             CreateMap<ClassLevel, ClassResponse>();
+
+            CreateMap<Game, WorldDTO>()
+                .IncludeBase<Game, GameResponse>();
         }
     }
 }

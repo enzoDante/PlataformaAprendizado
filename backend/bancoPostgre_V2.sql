@@ -87,12 +87,12 @@ create table sections(
 	media_url text,
 	media_duration float,
 	image_url text,
+	priority int not null default 1,
 	created_at timestamp with time zone default current_timestamp,
 	updated_at timestamp with time zone default current_timestamp,
 	constraint fk_sec_gameid foreign key (game_id) references game(id) on delete cascade
 );
 create index idx_section_tittle on sections(section_tittle);
-
 -- toda "section" tem vários níveis/aula
 create table class_level(
 	id int generated always as identity primary key,
@@ -104,6 +104,7 @@ create table class_level(
 	image_url text,
 	experience int default 0,
 	is_lesson bool default false, -- se "true" é um desafio que deve ser resolvido
+	priority int not null default 1,
 	created_at timestamp with time zone default current_timestamp,
 	updated_at timestamp with time zone default current_timestamp,
 	constraint fk_class_secid foreign key (section_id) references sections(id) on delete cascade

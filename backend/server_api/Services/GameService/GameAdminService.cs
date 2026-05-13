@@ -78,6 +78,8 @@ namespace server_api.Services.GameService
 
         public async Task<SectionsResponse> CreateSection(CreateSectionsRequest request)
         {
+            if (await _context.Sections.FirstOrDefaultAsync(f => f.Priority == request.Priority) != null) throw new ArgumentException("Section com mesma prioridade!");
+
             Sections section = _mapper.Map<Sections>(request);
             _context.Sections.Add(section);
             await _context.SaveChangesAsync();
@@ -99,6 +101,8 @@ namespace server_api.Services.GameService
 
         public async Task<SectionsResponse> UpdateSection(int id, UpdateSectionsRequest request)
         {
+            if(request.Priority != null && await _context.Sections.FirstOrDefaultAsync(f => f.Priority == request.Priority) != null) throw new ArgumentException("Section com mesma prioridade!");
+
             Sections? section = await _context.Sections.FirstOrDefaultAsync(s => s.Id == id);
             if (section == null) throw new ArgumentException("Não foi possível encontrar essa Seção");
 
@@ -119,6 +123,7 @@ namespace server_api.Services.GameService
 
         public async Task<ClassResponse> CreateClassLevel(CreateClassRequest request)
         {
+            if(await _context.ClassLevels.FirstOrDefaultAsync(f => f.Priority == request.Priority) != null) throw new ArgumentException("ClassLevel com mesma prioridade!");
             ClassLevel classL = _mapper.Map<ClassLevel>(request);
             _context.ClassLevels.Add(classL);
 
@@ -154,6 +159,7 @@ namespace server_api.Services.GameService
 
         public async Task<ClassResponse> UpdateClassLevel(int id, UpdateClassRequest request)
         {
+            if(request.Priority != null && await _context.ClassLevels.FirstOrDefaultAsync(f => f.Priority == request.Priority) != null) throw new ArgumentException("ClassLevel com mesma prioridade!");
             ClassLevel? level = await _context.ClassLevels.FirstOrDefaultAsync(c => c.Id == id);
             if (level == null) throw new ArgumentException("Não foi possível encontrar essa Classe");
 

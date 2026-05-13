@@ -10,6 +10,7 @@
         public string MediaUrl {  get; set; } = string.Empty;
         public float MediaDuration { get; set; }
         public string ImageUrl {  get; set; } = string.Empty;
+        public int Priority { get; set; } = 1;
         public DateTime CreatedAt {  get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

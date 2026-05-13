@@ -10,6 +10,7 @@ namespace server_api.DTOs.GameDTOs
         public string MediaUrl { get; set; } = string.Empty;
         public float MediaDuration { get; set; }
         public string ImageUrl { get; set; } = string.Empty;
+        public int Priority { get; set; } = 1;
     }
 
     public class SectionsResponse
@@ -21,6 +22,7 @@ namespace server_api.DTOs.GameDTOs
         public string MediaUrl { get; set; } = string.Empty;
         public float MediaDuration { get; set; }
         public string ImageUrl { get; set; } = string.Empty;
+        public int Priority { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }
@@ -31,5 +33,6 @@ namespace server_api.DTOs.GameDTOs
         public string? MediaUrl { get; set; }
         public float? MediaDuration { get; set; }
         public string? ImageUrl { get; set; }
+        public int? Priority { get; set; }
     }
 }

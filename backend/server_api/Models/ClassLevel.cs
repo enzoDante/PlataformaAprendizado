@@ -13,6 +13,7 @@
         public string ImageUrl {  get; set; } = string.Empty;
         public int Experience { get; set; }
         public bool IsLesson { get; set; } // caso seja true --> é uma atividade para responder
+        public int Priority { get; set; } = 1;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
