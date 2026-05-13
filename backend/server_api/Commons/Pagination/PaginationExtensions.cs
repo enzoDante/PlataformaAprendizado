@@ -4,7 +4,7 @@ namespace server_api.Commons.Pagination
 {
     public static class PaginationExtensions
     {
-        public static async Task<PageResponse<T>> ToPagedListASync<T>(this IQueryable<T> source, PageRequest request)
+        public static async Task<PageResponse<T>> ToPagedListAsync<T>(this IQueryable<T> source, PageRequest request)
         {
             if(request.PageNumber < 1) request.PageNumber = 1;
             if(request.PageSize < 10) request.PageSize = 10;

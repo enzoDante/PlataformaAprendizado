@@ -13,6 +13,7 @@ namespace server_api.DTOs.GameDTOs
         public string ImageUrl { get; set; } = string.Empty;
         public int Experience { get; set; }
         public bool IsLesson { get; set; } // caso seja true --> é uma atividade para responder
+        public string? Answer { get; set; } // resposta para o desafio, caso seja um desafio
     }
 
     public class ClassResponse
@@ -38,5 +39,6 @@ namespace server_api.DTOs.GameDTOs
         public string? ImageUrl { get; set; }
         public int? Experience { get; set; }
         public bool? IsLesson { get; set; } // caso seja true --> é uma atividade para responder
+        public string? Answer { get; set; } // resposta para o desafio, caso seja um desafio
     }
 }

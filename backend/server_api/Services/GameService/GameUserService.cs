@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using server_api.Commons;
+using server_api.Commons.Pagination;
 using server_api.Context;
+using server_api.DTOs.GameDTOs;
 using server_api.Models;
 
 namespace server_api.Services.GameService
@@ -38,6 +40,49 @@ namespace server_api.Services.GameService
             return true;
         }
 
+        public async Task<PageResponse<GameResponse>> GetGamesPage(
+            PageRequest request,
+            string? searchName = null,
+            string? searchDifficulty = null,
+            bool? searchCertification = null,
+            bool? myGames = null,
+            DateTime? searchCreatedAt = null
+            )
+        {
+            IQueryable<Game> query = _context.Games.AsNoTracking();
+            if (!string.IsNullOrEmpty(searchName))
+            {
+                query = query.Where(g => g.Tittle.Contains(searchName));
+            }
+            if (!string.IsNullOrEmpty(searchDifficulty))
+            {
+                query = query.Where(g => g.Dificult.Contains(searchDifficulty));
+            }
+            if (searchCertification.HasValue)
+            {
+                query = query.Where(g => g.Certification == searchCertification.Value);
+            }
+            if (myGames != null)
+            {
+                if (myGames.Value)
+                {
+                    query = query.Where(g => g.UsersGames.Any(ug => ug.UserId == _userId));
+                }
+                else
+                {
+                    query = query.Where(g => !g.UsersGames.Any(ug => ug.UserId == _userId));
+                }
+            }
+            if (searchCreatedAt.HasValue)
+            {
+                query = query.Where(g => g.CreatedAt.Date == searchCreatedAt.Value.Date);
+            }
+
+            PageResponse<Game> pagedGames = await query.ToPagedListAsync(request);
+
+            var gameResponse = pagedGames.Items.Select(g => _mapper.Map<GameResponse>(g)); //.ToList()
+            return new PageResponse<GameResponse>(gameResponse, pagedGames.Metadata);
+        }
         // criar os métodos que retornam qualquer informação do jogo, como as seções, as classes, etc. para o usuário poder acessar
 
 

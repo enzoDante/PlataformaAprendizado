@@ -120,8 +120,21 @@ namespace server_api.Services.GameService
         public async Task<ClassResponse> CreateClassLevel(CreateClassRequest request)
         {
             ClassLevel classL = _mapper.Map<ClassLevel>(request);
-
             _context.ClassLevels.Add(classL);
+
+            // quando criar essa aula, preciso verificar se é um desafio, caso seja um desafio, o admin precisa informar a resposta.
+            if (classL.IsLesson)
+            {
+                UserLesson userLesson = new UserLesson
+                {
+                    UserId = _userId,
+                    ClassId = classL.Id,
+                    ClassLevel = classL,
+                    UserResolution = request.Answer ?? "",
+                };
+                _context.UsersLessons.Add(userLesson);
+            }
+
             await _context.SaveChangesAsync();
 
             return _mapper.Map<ClassResponse>(classL);
@@ -151,6 +164,15 @@ namespace server_api.Services.GameService
             level.ImageUrl = request.ImageUrl ?? level.ImageUrl;
             level.Experience = request.Experience ?? level.Experience;
             level.IsLesson = request.IsLesson ?? level.IsLesson;
+
+            if (level.IsLesson) { 
+                var userLesson = await _context.UsersLessons.FirstOrDefaultAsync(ul => ul.ClassId == level.Id && ul.UserId == _userId);
+                if (userLesson != null)
+                {
+                    userLesson.UserResolution = request.Answer ?? userLesson.UserResolution;
+                    userLesson.UpdatedAt = DateTime.UtcNow;
+                }
+            }
 
             level.UpdatedAt = DateTime.UtcNow;
 
