@@ -11,9 +11,10 @@ namespace server_api.Commons
         }
         private ClaimsPrincipal? User => _httpContextAccessor.HttpContext?.User;
 
-        public int GetUserIdFromJWT()
+        public int GetUserIdFromJWT(bool admin = false)
         {
             var userIdClaim = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if(admin && User?.FindFirst(ClaimTypes.Role)?.Value != "Admin") throw new ArgumentException("Este usuário não tem acesso");
             return int.TryParse(userIdClaim, out int userId) ? userId : throw new ArgumentException("Não foi possível encontrar este usuário");
         }
     }

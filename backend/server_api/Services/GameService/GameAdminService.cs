@@ -13,17 +13,19 @@ namespace server_api.Services.GameService
         private readonly UserJWTGet _userJWTGet;
         private readonly IMapper _mapper;
         private readonly int _userId;
-        public GameAdminService(ContextDB context, UserJWTGet userJWTGet, IMapper mapper)
+        private readonly ILogger _logger;
+        public GameAdminService(ContextDB context, UserJWTGet userJWTGet, IMapper mapper, ILogger logger)
         {
             _context = context;
             _userJWTGet = userJWTGet;
             _mapper = mapper;
-            _userId = _userJWTGet.GetUserIdFromJWT();
+            _userId = _userJWTGet.GetUserIdFromJWT(true);
+            _logger = logger;
         }
         // ============================ GAME ============================
         public async Task<GameResponse> CreateGame(CreateGameRequest request)
         {
-            //int id = _userJWTGet.GetUserIdFromJWT();
+
             Game jogo = _mapper.Map<Game>(request);
 
             UsersGames usersGames = new UsersGames
@@ -45,11 +47,12 @@ namespace server_api.Services.GameService
 
         public async Task<bool> DeleteGame(int id)
         {
-            //int userId = _userJWTGet.GetUserIdFromJWT();
+            _logger.LogInformation("Admin id: {id} está deletando o jogo {gameId}", _userId, id);
             var game = await _context.Games.Include(g => g.UsersGames)
                                             .FirstOrDefaultAsync(g => g.Id == id && g.UsersGames.Any(ug => ug.UserId == _userId && ug.Creator));
             if (game == null)
             {
+                _logger.LogWarning("Falha ao Deletar: Game {gameId} não encontrado.", id);
                 throw new ArgumentException("Jogo não encontrado");
             }
             _context.Games.Remove(game);
@@ -60,8 +63,12 @@ namespace server_api.Services.GameService
 
         public async Task<GameResponse> UpdateGame(int id, UpdateGameRequest request)
         {
+            _logger.LogInformation($"Admin id: {_userId} está atualizando o jogo {id}.");
             Game? game = await _context.Games.FirstOrDefaultAsync(g => g.Id == id);
-            if (game == null) throw new ArgumentException("Não foi possível encontrar esse Jogo");
+            if (game == null) {
+                _logger.LogWarning($"Falha ao atualizar, jogo {id} não encontrado.");
+                throw new ArgumentException("Não foi possível encontrar esse Jogo.");
+            }
 
             game.Tittle = request.Tittle ?? game.Tittle;
             game.Description = request.Description ?? game.Description;
@@ -89,9 +96,11 @@ namespace server_api.Services.GameService
 
         public async Task<bool> DeleteSection(int id)
         {
+            _logger.LogInformation($"Admin id: {_userId} está deletando a section {id}.");
             var section = await _context.Sections.FindAsync(id);
             if (section == null)
             {
+                _logger.LogWarning($"Falha ao deletar, section {id} não encontrado.");
                 throw new ArgumentException("Seção não encontrada");
             }
             _context.Sections.Remove(section);
@@ -101,10 +110,11 @@ namespace server_api.Services.GameService
 
         public async Task<SectionsResponse> UpdateSection(int id, UpdateSectionsRequest request)
         {
-            if(request.Priority != null && await _context.Sections.FirstOrDefaultAsync(f => f.Priority == request.Priority) != null) throw new ArgumentException("Section com mesma prioridade!");
+            _logger.LogInformation($"Admin id: {_userId} está atualizando a section {id}.");
+            if (request.Priority != null && await _context.Sections.FirstOrDefaultAsync(f => f.Priority == request.Priority) != null) throw new ArgumentException("Section com mesma prioridade!");
 
             Sections? section = await _context.Sections.FirstOrDefaultAsync(s => s.Id == id);
-            if (section == null) throw new ArgumentException("Não foi possível encontrar essa Seção");
+            if (section == null) throw new ArgumentException("Não foi possível encontrar essa Seção.");
 
             section.SectionTittle = request.SectionTittle ?? section.SectionTittle;
             section.Description = request.Description ?? section.Description;
@@ -147,9 +157,11 @@ namespace server_api.Services.GameService
 
         public async Task<bool> DeleteClassLevel (int id)
         {
+            _logger.LogInformation($"Admin id: {_userId} está deletando a aula {id}.");
             var classL = await _context.ClassLevels.FindAsync(id);
             if (classL == null)
             {
+                _logger.LogWarning($"Falha ao deletar, aula {id} não encontrado.");
                 throw new ArgumentException("Classe não encontrada");
             }
             _context.ClassLevels.Remove(classL);
@@ -159,7 +171,8 @@ namespace server_api.Services.GameService
 
         public async Task<ClassResponse> UpdateClassLevel(int id, UpdateClassRequest request)
         {
-            if(request.Priority != null && await _context.ClassLevels.FirstOrDefaultAsync(f => f.Priority == request.Priority) != null) throw new ArgumentException("ClassLevel com mesma prioridade!");
+            _logger.LogInformation($"Admin id: {_userId} está atualizando a aula {id}.");
+            if (request.Priority != null && await _context.ClassLevels.FirstOrDefaultAsync(f => f.Priority == request.Priority) != null) throw new ArgumentException("ClassLevel com mesma prioridade!");
             ClassLevel? level = await _context.ClassLevels.FirstOrDefaultAsync(c => c.Id == id);
             if (level == null) throw new ArgumentException("Não foi possível encontrar essa Classe");
 
