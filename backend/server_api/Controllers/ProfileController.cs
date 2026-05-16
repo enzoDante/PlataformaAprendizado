@@ -29,7 +29,7 @@ namespace server_api.Controllers
             return updatedProfile;
         }
         [HttpPut("password"), Authorize]
-        public async Task<ActionResult> UpdatePassword(string newPassword)
+        public async Task<ActionResult> UpdatePassword([FromBody] string newPassword)
         {
             bool success = await _profileService.UpdateUserPassword(newPassword);
             if (!success) return BadRequest("Não foi possível atualizar a senha. Verifique se o usuário existe e se você tem permissão para alterar esta senha.");

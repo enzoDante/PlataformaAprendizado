@@ -16,7 +16,7 @@ namespace server_api.Controllers
             _gameUserService = gameUserService;
         }
 
-        [HttpPost("JoinGame"), Authorize]
+        [HttpPost("{gameId}/JoinGame"), Authorize]
         public async Task<IActionResult> JoinGame(int gameId)
         {
             await _gameUserService.JoinGame(gameId);
@@ -30,13 +30,13 @@ namespace server_api.Controllers
             return Ok(response);
         }
 
-        [HttpGet("{gameId}/Sections"), Authorize]
+        [HttpGet("{gameId}/Sections", Name = "GetGameAndSectionsRoute"), Authorize]
         public async Task<ActionResult<WorldDTO>> GetGameAndSections(int gameId)
         {
             return Ok(await _gameUserService.GetGameAndSections(gameId));
         }
 
-        [HttpGet("Section/{id}"), Authorize]
+        [HttpGet("Section/{id}/Classes", Name = "GetSectionClassesRoute"), Authorize]
         public async Task<ActionResult<IEnumerable<ClassResponse>>> GetSectionClasses(int id)
         {
             return Ok(await _gameUserService.GetSectionClasses(id));

@@ -16,10 +16,12 @@ namespace server_api.Controllers
         }
 
         [HttpPost("Game"), Authorize(Roles = "Admin")]
+        [ProducesResponseType(typeof(GameResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<GameResponse>> CreateGame(CreateGameRequest request)
         {
             GameResponse response = await _gameAdminService.CreateGame(request);
-            return CreatedAtAction("GetGameAndSections", "Game", new {id = response.Id}, response);
+            return CreatedAtRoute("GetGameAndSectionsRoute", new {gameId = response.Id}, response);
             // no nameof colocar o método do controller que seria o Get do Game by id
             // caso esteja em outro controller, pode separar com aspas os nomes:
             // "GetGameAndSections" é o nome do método no outro Controller
@@ -45,7 +47,7 @@ namespace server_api.Controllers
         public async Task<ActionResult<SectionsResponse>> CreateSection(CreateSectionsRequest request)
         {
             SectionsResponse response = await _gameAdminService.CreateSection(request);
-            return CreatedAtAction("GetSectionClasses", "Game", new { id = response.Id }, response);
+            return CreatedAtRoute("GetSectionClassesRoute", new { id = response.Id }, response);
         }
 
         [HttpDelete("Section/{id}"), Authorize(Roles = "Admin")]
@@ -66,7 +68,7 @@ namespace server_api.Controllers
         public async Task<ActionResult<ClassResponse>> CreateClassLevel(CreateClassRequest request)
         {
             ClassResponse response = await _gameAdminService.CreateClassLevel(request);
-            return CreatedAtAction("GetSectionClasses", "Game", new {id = response.Id}, response);
+            return CreatedAtRoute("GetSectionClassesRoute", new {id = response.Id}, response);
         }
         [HttpDelete("Class/{id}"), Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteClassLevel(int id)

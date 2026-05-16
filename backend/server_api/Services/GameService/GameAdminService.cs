@@ -13,8 +13,8 @@ namespace server_api.Services.GameService
         private readonly UserJWTGet _userJWTGet;
         private readonly IMapper _mapper;
         private readonly int _userId;
-        private readonly ILogger _logger;
-        public GameAdminService(ContextDB context, UserJWTGet userJWTGet, IMapper mapper, ILogger logger)
+        private readonly ILogger<GameAdminService> _logger;
+        public GameAdminService(ContextDB context, UserJWTGet userJWTGet, IMapper mapper, ILogger<GameAdminService> logger)
         {
             _context = context;
             _userJWTGet = userJWTGet;
