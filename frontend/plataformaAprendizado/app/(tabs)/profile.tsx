@@ -5,6 +5,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { ProfileAvatar } from "@/components/UserComponents/ProfileAvatar";
 import { ProfileForm } from "@/components/UserComponents/ProfileForm";
 import { ProfileActions } from "@/components/UserComponents/ProfileActions";
+import { router } from "expo-router";
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -12,17 +13,26 @@ export default function Profile() {
   const {
     data,
     isEditing,
-    showPassword,
     errors,
     initials,
     setField,
     startEditing,
     cancelEditing,
     saveChanges,
-    toggleShowPassword,
     logout,
   } = useProfile();
-
+  const handleLogoutPress = async () => {
+    try {
+      if (logout) {
+        logout(); // Executa a limpeza de sessão do hook de vocês
+      }
+      router.replace("/login"); // Força o app a sair das abas e ir para a tela de Login
+    } catch (error) {
+      console.error("Erro ao deslogar:", error);
+      // Garante o redirecionamento mesmo se o backend falhar
+      router.replace("/login"); 
+    }
+  };
   return (
     <View style={GlobalStyles.screen}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
@@ -49,10 +59,8 @@ export default function Profile() {
         <ProfileForm
           data={data}
           isEditing={isEditing}
-          showPassword={showPassword}
           errors={errors}
           onChangeField={setField}
-          onTogglePassword={toggleShowPassword}
         />
 
         {/* ── Botões de ação + logout ── */}
@@ -61,7 +69,7 @@ export default function Profile() {
           onEdit={startEditing}
           onSave={saveChanges}
           onCancel={cancelEditing}
-          onLogout={logout}
+          onLogout={handleLogoutPress}
         />
       </ScrollView>
     </View>

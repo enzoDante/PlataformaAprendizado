@@ -17,10 +17,8 @@ interface FieldConfig {
 interface ProfileFormProps {
   data: ProfileData;
   isEditing: boolean;
-  showPassword: boolean;
   errors: Record<string, string>;
   onChangeField: (field: keyof ProfileData, value: string) => void;
-  onTogglePassword: () => void;
 }
 
 // ─── Field config ─────────────────────────────────────────────────────────────
@@ -102,10 +100,8 @@ function FieldRow({
 export function ProfileForm({
   data,
   isEditing,
-  showPassword,
   errors,
   onChangeField,
-  onTogglePassword,
 }: ProfileFormProps) {
   return (
     <View style={[GlobalStyles.card, styles.card]}>
@@ -126,46 +122,6 @@ export function ProfileForm({
         </React.Fragment>
       ))}
 
-      {/* Password field — special: has visibility toggle */}
-      <View>
-        <Text style={styles.fieldLabel}>Senha</Text>
-        {isEditing ? (
-          <View style={GlobalStyles.inputWrapper}>
-            <View style={GlobalStyles.row}>
-              <TextInput
-                style={[
-                  GlobalStyles.input,
-                  styles.passwordInput,
-                  !!errors.password && GlobalStyles.inputError,
-                ]}
-                value={data.password}
-                onChangeText={(v) => onChangeField("password", v)}
-                placeholder="Nova senha (opcional)"
-                placeholderTextColor={Colors.textMuted}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <TouchableOpacity
-                style={styles.eyeBtn}
-                onPress={onTogglePassword}
-                activeOpacity={0.7}
-              >
-                <Ionicons
-                  name={showPassword ? "eye-off-outline" : "eye-outline"}
-                  size={20}
-                  color={Colors.textMuted}
-                />
-              </TouchableOpacity>
-            </View>
-            {!!errors.password && (
-              <Text style={GlobalStyles.inputErrorText}>{errors.password}</Text>
-            )}
-          </View>
-        ) : (
-          <Text style={[GlobalStyles.bodyBase, styles.fieldValue]}>••••••••</Text>
-        )}
-      </View>
     </View>
   );
 }
