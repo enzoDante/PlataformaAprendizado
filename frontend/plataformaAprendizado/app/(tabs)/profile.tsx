@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, ScrollView, StatusBar, StyleSheet } from "react-native";
+import { View, Text, ScrollView, StatusBar, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import { GlobalStyles, Colors, Spacing } from "@/styles/GlobalStyles";
 import { useProfile } from "@/hooks/useProfile";
 import { ProfileAvatar } from "@/components/UserComponents/ProfileAvatar";
@@ -34,6 +34,10 @@ export default function Profile() {
     }
   };
   return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
     <View style={GlobalStyles.screen}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
 
@@ -73,6 +77,7 @@ export default function Profile() {
         />
       </ScrollView>
     </View>
+    </KeyboardAvoidingView>
   );
 }
 
