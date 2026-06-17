@@ -105,8 +105,6 @@ const ENROLLED_COURSES: Course[] = [
   },
 ];
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-
 export function useHome(): UseHomeReturn {
   const [userName] = useState("Ana");
 

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Colors } from "@/styles/GlobalStyles";
-
+import { router } from "expo-router";
+import { checkEnrollmentStatus } from "@/services/courseService";
+import { getUserId } from "@/services/authService";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type CourseStatus = "in_progress" | "completed" | "not_started";
@@ -120,8 +122,25 @@ export function useCourses(): UseCoursesReturn {
 
   const setFilter = (tab: FilterTab) => setActiveFilter(tab);
 
-  const onCoursePress = (course: EnrolledCourse) => {
-    console.log("Course pressed:", course.title);
+  const onCoursePress = async (course: EnrolledCourse) => {
+    try {
+      const userId = await getUserId();
+      if (!userId) {
+      alert("Sessão expirada. Faça login novamente.");
+      router.replace("/login");
+      return;
+    }
+      const gameId = parseInt(course.id);
+      const isEnrolled = await checkEnrollmentStatus(userId, gameId);
+
+      if (isEnrolled) {
+        router.push(`/worlds/${course.id}`); 
+      } else {
+        router.push(`/enrollment/${course.id}`);
+      }
+    } catch (error) {
+      alert("Não foi possível verificar seu acesso. Tente novamente.");
+    }
   };
 
   return {

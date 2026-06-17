@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { CourseDetail, CourseLevel } from "@/types/courseTypes";
+import { getAccessToken } from "@/services/authService";
 
 // ─── Replace with your real base URL ─────────────────────────────────────────
 const API_BASE = "https://your-api.com";
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export interface UseCourseDetailReturn {
   course: CourseDetail | null;
-  levels: CourseLevel[];           // levels with computed status
+  levels: CourseLevel[];
   totalXp: number;
   completedCount: number;
   isLoading: boolean;
@@ -23,18 +23,26 @@ export function useCourseDetail(courseId: string): UseCourseDetailReturn {
   const [error, setError] = useState<string | null>(null);
   const [fetchTick, setFetchTick] = useState(0);
 
-  // ── Fetch course from API ─────────────────────────────────────────────────
-
   useEffect(() => {
     let cancelled = false;
 
-    async function fetch() {
+    async function fetchCourseData() {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await global.fetch(`${API_BASE}/courses/${courseId}`);
+        const token = await getAccessToken();
+
+        const res = await fetch(`${API_BASE}/api/Courses/${courseId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          }
+        });
+
         if (!res.ok) throw new Error("Não foi possível carregar o curso.");
         const data: CourseDetail = await res.json();
+        
         if (!cancelled) setCourse(data);
       } catch (e: any) {
         if (!cancelled) setError(e.message ?? "Erro desconhecido.");
@@ -43,15 +51,11 @@ export function useCourseDetail(courseId: string): UseCourseDetailReturn {
       }
     }
 
-    fetch();
+    fetchCourseData();
     return () => { cancelled = true; };
   }, [courseId, fetchTick]);
 
   const refetch = useCallback(() => setFetchTick((t) => t + 1), []);
-
-  // ── Derive levels with computed status ────────────────────────────────────
-  // The API returns completedLevelIds; status is calculated here so the UI
-  // doesn't need to worry about it.
 
   const levels: CourseLevel[] = (course?.levels ?? []).map((level, index, arr) => {
     const isCompleted = course!.completedLevelIds.includes(level.id);
@@ -65,7 +69,6 @@ export function useCourseDetail(courseId: string): UseCourseDetailReturn {
     return { ...level, status };
   });
 
-  // ── Mark level as complete (call API, then update local state) ────────────
 
   const completeLevel = useCallback(
     async (levelId: string) => {
@@ -76,14 +79,18 @@ export function useCourseDetail(courseId: string): UseCourseDetailReturn {
       if (!level) return;
 
       try {
-        await global.fetch(`${API_BASE}/courses/${courseId}/levels/${levelId}/complete`, {
+        const token = await getAccessToken();
+        
+        await fetch(`${API_BASE}/api/Courses/${courseId}/levels/${levelId}/complete`, {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          }
         });
       } catch {
-        // Optimistic update already applied — silently ignore network errors
       }
 
-      // Optimistic update: reflect completion immediately in the UI
       setCourse((prev) =>
         prev
           ? {

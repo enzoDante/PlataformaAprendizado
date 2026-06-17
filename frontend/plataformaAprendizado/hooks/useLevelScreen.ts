@@ -33,7 +33,7 @@ export function useLevelScreen(exercises: LevelExercise[]): UseLevelScreenReturn
   const progressRatio = totalExercises > 0 ? currentIndex / totalExercises : 0;
 
   const selectOption = (optionId: string) => {
-    if (answerState !== "idle") return;   // locked after confirming
+    if (answerState !== "idle") return;
     setSelectedOptionId(optionId);
   };
 
