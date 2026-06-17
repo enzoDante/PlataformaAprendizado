@@ -1,10 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// ─── Config ───────────────────────────────────────────────────────────────────
-// Troque pelo IP da sua máquina quando usar dispositivo físico / Expo Go
-// Ex: "http://192.168.1.100:32768"
-// Para emulador Android use: "http://10.0.2.2:32768"
-const BASE_URL = "http://10.0.2.2:32768";
+const API_BASE = process.env.EXPO_PUBLIC_API_URL
 
 // ─── AsyncStorage Keys ────────────────────────────────────────────────────────
 const KEYS = {
@@ -51,7 +47,7 @@ async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const url = `${BASE_URL}/${path}`;
+  const url = `${API_BASE}/${path}`;
 
   const response = await fetch(url, {
     ...options,
@@ -227,4 +223,9 @@ export async function signUp(
     method: "POST",
     body: JSON.stringify(body),
   });
+}
+
+export async function getUserId(): Promise<number | null> {
+  const user = await getStoredUser();
+  return user ? user.id : null;
 }
