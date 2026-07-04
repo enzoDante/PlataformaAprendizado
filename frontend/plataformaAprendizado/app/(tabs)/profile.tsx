@@ -1,11 +1,12 @@
-import React from "react";
-import { View, Text, ScrollView, StatusBar, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, ScrollView, StatusBar, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity } from "react-native";
 import { GlobalStyles, Colors, Spacing } from "@/styles/GlobalStyles";
 import { useProfile } from "@/hooks/useProfile";
 import { ProfileAvatar } from "@/components/UserComponents/ProfileAvatar";
 import { ProfileForm } from "@/components/UserComponents/ProfileForm";
 import { ProfileActions } from "@/components/UserComponents/ProfileActions";
 import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -21,6 +22,22 @@ export default function Profile() {
     saveChanges,
     logout,
   } = useProfile();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+      async function checkRole() {
+        try {
+          const role = await AsyncStorage.getItem("user_role");
+          if (role === "ADMIN") {
+            setIsAdmin(true);
+          }
+        } catch (error) {
+          console.error("Erro ao buscar role:", error);
+        }
+      }
+      checkRole();
+    }, []);
+
   const handleLogoutPress = async () => {
     try {
       if (logout) {
@@ -67,6 +84,15 @@ export default function Profile() {
           onChangeField={setField}
         />
 
+        {isAdmin && !isEditing && (
+          <TouchableOpacity 
+            style={styles.adminButton}
+            onPress={() => router.push("/admin")}
+          >
+            <Text style={styles.adminButtonText}>Painel Administrador</Text>
+          </TouchableOpacity>
+        )}
+
         {/* ── Botões de ação + logout ── */}
         <ProfileActions
           isEditing={isEditing}
@@ -95,5 +121,24 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: Spacing.xl,
+  },
+  adminButton: {
+    backgroundColor: "#7C3AED", // Roxo correspondente à sua tela de Admin original
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginHorizontal: Spacing.base,
+    marginBottom: Spacing.base,
+    shadowColor: "#7C3AED",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3, // Sombra para Android
+  },
+  adminButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
