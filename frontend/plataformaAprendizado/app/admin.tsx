@@ -1,4 +1,17 @@
 import React, { useState } from "react";
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  ScrollView, 
+  StyleSheet, 
+  ActivityIndicator, 
+  Alert 
+} from "react-native";
+import { router } from "expo-router";
+import api from "@/services/api";
+import { getAccessToken } from "@/services/authService";
 
 interface Answer {
   text: string;
@@ -6,6 +19,7 @@ interface Answer {
 }
 
 interface FormErrors {
+  sectionId?: string;
   title?: string;
   content?: string;
   answers?: string;
@@ -18,10 +32,12 @@ const emptyAnswers = (): Answer[] =>
   Array.from({ length: ANSWER_COUNT }, () => ({ text: "", isCorrect: false }));
 
 export default function Admin() {
+  const [sectionId, setSectionId] = useState("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [answers, setAnswers] = useState<Answer[]>(emptyAnswers());
   const [errors, setErrors] = useState<FormErrors>({});
+  const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const handleAnswerText = (index: number, value: string) => {
@@ -41,6 +57,7 @@ export default function Admin() {
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
 
+    if (!sectionId.trim()) newErrors.sectionId = "Informe o ID da Section (Mundo)";
     if (!title.trim()) newErrors.title = "Informe o título da fase";
     if (!content.trim()) newErrors.content = "Informe a pergunta";
 
@@ -55,24 +72,40 @@ export default function Admin() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
 
-    const payload = {
-      title: title.trim(),
-      content: content.trim(),
-      answers: answers.map((a) => ({
-        text: a.text.trim(),
-        isCorrect: a.isCorrect,
-      })),
-    };
+    setLoading(true);
+    try {
+      const token = await getAccessToken();
+      
+      // Ajuste o Payload para bater com as propriedades que seu CreateClassRequest espera no C#
+      const payload = {
+        sectionId: parseInt(sectionId), 
+        title: title.trim(),
+        content: content.trim(),
+        answers: answers.map((a) => ({
+          text: a.text.trim(),
+          isCorrect: a.isCorrect,
+        })),
+      };
 
-    // TODO: integrar com o endpoint quando estiver disponível
-    console.log("Fase criada:", payload);
-    setSubmitted(true);
+      // Dispara o POST para o endpoint do seu Controller C#
+      await api.post("/GameAdmin/Class", payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setSubmitted(true);
+    } catch (error: any) {
+      console.error("Erro ao criar fase:", error?.response?.data || error.message);
+      Alert.alert("Erro", "Não foi possível salvar a fase no servidor.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReset = () => {
+    setSectionId("");
     setTitle("");
     setContent("");
     setAnswers(emptyAnswers());
@@ -82,183 +115,132 @@ export default function Admin() {
 
   if (submitted) {
     return (
-      <div style={styles.screen}>
-        <div style={styles.successBox}>
-          <span style={styles.successIcon}>✓</span>
-          <h2 style={styles.successTitle}>Fase criada com sucesso!</h2>
-          <p style={styles.successSub}>
-            Os dados foram enviados. Você pode criar uma nova fase agora.
-          </p>
-          <button style={styles.btnPrimary} onClick={handleReset}>
-            Criar nova fase
-          </button>
-        </div>
-      </div>
+      <View style={styles.screen}>
+        <View style={styles.successBox}>
+          <Text style={styles.successIcon}>✓</Text>
+          <Text style={styles.successTitle}>Fase criada com sucesso!</Text>
+          <Text style={styles.successSub}>
+            Os dados foram enviados para a API C#. Você pode criar outra agora.
+          </Text>
+          <TouchableOpacity style={styles.btnPrimary} onPress={handleReset}>
+            <Text style={styles.btnText}>Criar nova fase</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     );
   }
 
   return (
-    <div style={styles.screen}>
-      <div style={styles.container}>
-        <h1 style={styles.pageTitle}>Criar fase</h1>
-        <p style={styles.pageSubtitle}>
-          Preencha os campos abaixo para adicionar uma nova fase ao app.
-        </p>
+    <ScrollView style={styles.screen} contentContainerStyle={{ paddingBottom: 40 }}>
+      <View style={styles.container}>
+        <Text style={styles.pageTitle}>Criar fase</Text>
+        <Text style={styles.pageSubtitle}>
+          Adicione uma nova fase vinculando-a a uma Section da sua API.
+        </Text>
+
+        {/* Section ID */}
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>ID da Section (Mundo)</Text>
+          <TextInput
+            style={[styles.input, errors.sectionId && styles.inputError]}
+            placeholder="Ex: 1"
+            keyboardType="numeric"
+            value={sectionId}
+            onChangeText={(txt) => {
+              setSectionId(txt);
+              if (errors.sectionId) setErrors((e) => ({ ...e, sectionId: undefined }));
+            }}
+          />
+          {errors.sectionId && <Text style={styles.errorText}>{errors.sectionId}</Text>}
+        </View>
 
         {/* Título */}
-        <div style={styles.fieldGroup}>
-          <label style={styles.label}>Título da fase</label>
-          <input
-            style={{
-              ...styles.input,
-              ...(errors.title ? styles.inputError : {}),
-            }}
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Título da fase</Text>
+          <TextInput
+            style={[styles.input, errors.title && styles.inputError]}
             placeholder="Ex: Variáveis em JavaScript"
             value={title}
-            onChange={(e) => {
-              setTitle(e.target.value);
+            onChangeText={(txt) => {
+              setTitle(txt);
               if (errors.title) setErrors((e) => ({ ...e, title: undefined }));
             }}
           />
-          {errors.title && <span style={styles.errorText}>{errors.title}</span>}
-        </div>
+          {errors.title && <Text style={styles.errorText}>{errors.title}</Text>}
+        </View>
 
         {/* Pergunta */}
-        <div style={styles.fieldGroup}>
-          <label style={styles.label}>Pergunta</label>
-          <textarea
-            style={{
-              ...styles.textarea,
-              ...(errors.content ? styles.inputError : {}),
-            }}
-            placeholder="Ex: Qual das opções abaixo é usada para declarar uma variável em JavaScript?"
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Pergunta</Text>
+          <TextInput
+            style={[styles.textarea, errors.content && styles.inputError]}
+            placeholder="Qual comando inicia uma variável?"
             value={content}
-            rows={3}
-            onChange={(e) => {
-              setContent(e.target.value);
-              if (errors.content)
-                setErrors((e) => ({ ...e, content: undefined }));
+            multiline
+            numberOfLines={3}
+            onChangeText={(txt) => {
+              setContent(txt);
+              if (errors.content) setErrors((e) => ({ ...e, content: undefined }));
             }}
           />
-          {errors.content && (
-            <span style={styles.errorText}>{errors.content}</span>
-          )}
-        </div>
+          {errors.content && <Text style={styles.errorText}>{errors.content}</Text>}
+        </View>
 
         {/* Respostas */}
-        <div style={styles.fieldGroup}>
-          <label style={styles.label}>Respostas</label>
-          <p style={styles.hint}>
-            Preencha as 4 opções e marque qual é a correta.
-          </p>
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Respostas</Text>
+          <Text style={styles.hint}>Preencha as 4 opções e marque a correta.</Text>
 
-          <div style={styles.answersGrid}>
+          <View style={styles.answersGrid}>
             {answers.map((answer, index) => (
-              <div
-                key={index}
-                style={{
-                  ...styles.answerRow,
-                  ...(answer.isCorrect ? styles.answerRowCorrect : {}),
-                }}
+              <View 
+                key={index} 
+                style={[styles.answerRow, answer.isCorrect && styles.answerRowCorrect]}
               >
-                <button
-                  style={{
-                    ...styles.radioBtn,
-                    ...(answer.isCorrect ? styles.radioBtnActive : {}),
-                  }}
-                  onClick={() => handleSelectCorrect(index)}
-                  title="Marcar como correta"
-                  aria-label={`Marcar opção ${index + 1} como correta`}
+                <TouchableOpacity
+                  style={[styles.radioBtn, answer.isCorrect && styles.radioBtnActive]}
+                  onPress={() => handleSelectCorrect(index)}
                 >
-                  {answer.isCorrect && <span style={styles.radioDot} />}
-                </button>
+                  {answer.isCorrect && <View style={styles.radioDot} />}
+                </TouchableOpacity>
 
-                <input
-                  style={{
-                    ...styles.answerInput,
-                    ...(errors.answers ? styles.inputError : {}),
-                  }}
+                <TextInput
+                  style={styles.answerInput}
                   placeholder={`Opção ${index + 1}`}
                   value={answer.text}
-                  onChange={(e) => handleAnswerText(index, e.target.value)}
+                  onChangeText={(txt) => handleAnswerText(index, txt)}
                 />
-
-                {answer.isCorrect && (
-                  <span style={styles.correctBadge}>Correta</span>
-                )}
-              </div>
+                {answer.isCorrect && <Text style={styles.correctBadge}>Correta</Text>}
+              </View>
             ))}
-          </div>
-
-          {errors.answers && (
-            <span style={styles.errorText}>{errors.answers}</span>
-          )}
-          {errors.correct && (
-            <span style={styles.errorText}>{errors.correct}</span>
-          )}
-        </div>
-
-        {/* Preview */}
-        {(title || content || answers.some((a) => a.text)) && (
-          <div style={styles.preview}>
-            <p style={styles.previewLabel}>Pré-visualização</p>
-            <div style={styles.previewCard}>
-              {title && <p style={styles.previewTitle}>{title}</p>}
-              {content && <p style={styles.previewContent}>{content}</p>}
-              <div style={styles.previewOptions}>
-                {answers
-                  .filter((a) => a.text)
-                  .map((a, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        ...styles.previewOption,
-                        ...(a.isCorrect ? styles.previewOptionCorrect : {}),
-                      }}
-                    >
-                      <span
-                        style={{
-                          ...styles.previewOptionLetter,
-                          ...(a.isCorrect
-                            ? styles.previewOptionLetterCorrect
-                            : {}),
-                        }}
-                      >
-                        {String.fromCharCode(65 + i)}
-                      </span>
-                      <span style={styles.previewOptionText}>{a.text}</span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </div>
-        )}
+          </View>
+          {errors.answers && <Text style={styles.errorText}>{errors.answers}</Text>}
+          {errors.correct && <Text style={styles.errorText}>{errors.correct}</Text>}
+        </View>
 
         {/* Ações */}
-        <div style={styles.actions}>
-          <button style={styles.btnSecondary} onClick={handleReset}>
-            Limpar
-          </button>
-          <button style={styles.btnPrimary} onClick={handleSubmit}>
-            Criar fase
-          </button>
-        </div>
-      </div>
-    </div>
+        <View style={styles.actions}>
+          <TouchableOpacity style={styles.btnSecondary} onPress={handleReset}>
+            <Text style={styles.btnTextSecondary}>Limpar</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.btnPrimary} onPress={handleSubmit} disabled={loading}>
+            {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnText}>Criar fase</Text>}
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+// ─── Styles Nativos ───────────────────────────────────────────────────────────
 const colors = {
   primary: "#7C3AED",
   primaryLight: "#EDE9FE",
-  primaryDark: "#5B21B6",
   border: "#E5E7EB",
   borderError: "#F87171",
   errorBg: "#FEF2F2",
   errorText: "#B91C1C",
-  successBg: "#F0FDF4",
-  successText: "#166534",
   correctBg: "#F0FDF4",
   correctBorder: "#4ADE80",
   textPrimary: "#111827",
@@ -268,280 +250,46 @@ const colors = {
   white: "#FFFFFF",
 };
 
-const styles: Record<string, React.CSSProperties> = {
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-    minHeight: "100vh",
-    padding: "32px 16px",
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background, paddingTop: 40 },
+  container: { paddingHorizontal: 20 },
+  pageTitle: { fontSize: 24, fontWeight: "700", color: colors.textPrimary, marginBottom: 4 },
+  pageSubtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: 24 },
+  fieldGroup: { marginBottom: 20 },
+  label: { fontSize: 14, fontWeight: "600", color: colors.textPrimary, marginBottom: 6 },
+  hint: { fontSize: 12, color: colors.textMuted, marginBottom: 10 },
+  input: { 
+    backgroundColor: colors.white, padding: 12, borderRadius: 10, 
+    borderWidth: 1.5, borderColor: colors.border, color: colors.textPrimary 
   },
-  container: {
-    maxWidth: 600,
-    marginLeft: "auto",
-    marginRight: "auto",
+  textarea: { 
+    backgroundColor: colors.white, padding: 12, borderRadius: 10, 
+    borderWidth: 1.5, borderColor: colors.border, color: colors.textPrimary,
+    minHeight: 80, textAlignVertical: "top" 
   },
-  pageTitle: {
-    fontSize: 24,
-    fontWeight: 700,
-    color: colors.textPrimary,
-    margin: "0 0 4px 0",
+  inputError: { borderColor: colors.borderError, backgroundColor: colors.errorBg },
+  errorText: { fontSize: 12, color: colors.errorText, marginTop: 4 },
+  answersGrid: { gap: 10 },
+  answerRow: { 
+    flexDirection: "row", alignItems: "center", backgroundColor: colors.white, 
+    padding: 10, borderRadius: 10, borderWidth: 1.5, borderColor: colors.border 
   },
-  pageSubtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    margin: "0 0 32px 0",
+  answerRowCorrect: { borderColor: colors.correctBorder, backgroundColor: colors.correctBg },
+  radioBtn: { 
+    width: 20, height: 20, borderRadius: 10, borderWidth: 2, 
+    borderColor: colors.border, alignItems: "center", justifyContent: "center", marginRight: 10 
   },
-
-  // Fields
-  fieldGroup: {
-    marginBottom: 24,
-  },
-  label: {
-    display: "block",
-    fontSize: 14,
-    fontWeight: 600,
-    color: colors.textPrimary,
-    marginBottom: 6,
-  },
-  hint: {
-    fontSize: 13,
-    color: colors.textMuted,
-    margin: "0 0 10px 0",
-  },
-  input: {
-    width: "100%",
-    padding: "10px 14px",
-    fontSize: 15,
-    borderRadius: 10,
-    border: `1.5px solid ${colors.border}`,
-    outline: "none",
-    color: colors.textPrimary,
-    backgroundColor: colors.white,
-    boxSizing: "border-box",
-  },
-  textarea: {
-    width: "100%",
-    padding: "10px 14px",
-    fontSize: 15,
-    borderRadius: 10,
-    border: `1.5px solid ${colors.border}`,
-    outline: "none",
-    color: colors.textPrimary,
-    backgroundColor: colors.white,
-    resize: "vertical",
-    fontFamily: "inherit",
-    boxSizing: "border-box",
-  },
-  inputError: {
-    borderColor: colors.borderError,
-    backgroundColor: colors.errorBg,
-  },
-  errorText: {
-    display: "block",
-    fontSize: 12,
-    color: colors.errorText,
-    marginTop: 4,
-  },
-
-  // Answers
-  answersGrid: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-  },
-  answerRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    padding: "10px 12px",
-    borderRadius: 10,
-    border: `1.5px solid ${colors.border}`,
-    backgroundColor: colors.white,
-  },
-  answerRowCorrect: {
-    borderColor: colors.correctBorder,
-    backgroundColor: colors.correctBg,
-  },
-  radioBtn: {
-    width: 20,
-    height: 20,
-    borderRadius: "50%",
-    border: `2px solid ${colors.border}`,
-    backgroundColor: colors.white,
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    padding: 0,
-  },
-  radioBtnActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryLight,
-  },
-  radioDot: {
-    width: 8,
-    height: 8,
-    borderRadius: "50%",
-    backgroundColor: colors.primary,
-  },
-  answerInput: {
-    flex: 1,
-    fontSize: 15,
-    border: "none",
-    outline: "none",
-    backgroundColor: "transparent",
-    color: colors.textPrimary,
-    padding: 0,
-  },
-  correctBadge: {
-    fontSize: 11,
-    fontWeight: 600,
-    color: "#166534",
-    backgroundColor: "#DCFCE7",
-    borderRadius: 6,
-    padding: "2px 8px",
-    whiteSpace: "nowrap",
-  },
-
-  // Preview
-  preview: {
-    marginBottom: 24,
-  },
-  previewLabel: {
-    fontSize: 11,
-    fontWeight: 600,
-    color: colors.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-    marginBottom: 10,
-  },
-  previewCard: {
-    backgroundColor: colors.white,
-    border: `1.5px solid ${colors.border}`,
-    borderRadius: 14,
-    padding: "20px 16px",
-  },
-  previewTitle: {
-    fontSize: 13,
-    fontWeight: 600,
-    color: colors.textMuted,
-    marginBottom: 6,
-    margin: "0 0 6px 0",
-  },
-  previewContent: {
-    fontSize: 16,
-    fontWeight: 600,
-    color: colors.textPrimary,
-    marginBottom: 16,
-    lineHeight: 1.4,
-    margin: "0 0 16px 0",
-  },
-  previewOptions: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 8,
-  },
-  previewOption: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    padding: "10px 12px",
-    borderRadius: 10,
-    border: `1.5px solid ${colors.border}`,
-  },
-  previewOptionCorrect: {
-    borderColor: colors.correctBorder,
-    backgroundColor: colors.correctBg,
-  },
-  previewOptionLetter: {
-    width: 28,
-    height: 28,
-    borderRadius: "50%",
-    backgroundColor: colors.background,
-    border: `1.5px solid ${colors.border}`,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: 13,
-    fontWeight: 600,
-    color: colors.textSecondary,
-    flexShrink: 0,
-  },
-  previewOptionLetterCorrect: {
-    backgroundColor: colors.primaryLight,
-    borderColor: colors.primary,
-    color: colors.primary,
-  },
-  previewOptionText: {
-    fontSize: 15,
-    color: colors.textPrimary,
-  },
-
-  // Actions
-  actions: {
-    display: "flex",
-    gap: 12,
-    justifyContent: "flex-end",
-  },
-  btnPrimary: {
-    paddingTop: 12,
-    paddingBottom: 12,
-    paddingLeft: 28,
-    paddingRight: 28,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
-    border: "none",
-    color: colors.white,
-    fontSize: 15,
-    fontWeight: 600,
-    cursor: "pointer",
-  },
-  btnSecondary: {
-    paddingTop: 12,
-    paddingBottom: 12,
-    paddingLeft: 28,
-    paddingRight: 28,
-    borderRadius: 12,
-    backgroundColor: colors.white,
-    border: `1.5px solid ${colors.border}`,
-    color: colors.textSecondary,
-    fontSize: 15,
-    fontWeight: 500,
-    cursor: "pointer",
-  },
-
-  // Success
-  successBox: {
-    maxWidth: 400,
-    margin: "80px auto",
-    textAlign: "center",
-    padding: 32,
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    border: `1.5px solid ${colors.border}`,
-  },
-  successIcon: {
-    display: "inline-flex",
-    width: 56,
-    height: 56,
-    borderRadius: "50%",
-    backgroundColor: "#DCFCE7",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: 24,
-    color: "#166534",
-    marginBottom: 16,
-  },
-  successTitle: {
-    fontSize: 20,
-    fontWeight: 700,
-    color: colors.textPrimary,
-    margin: "0 0 8px 0",
-  },
-  successSub: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    margin: "0 0 24px 0",
-  },
-};
+  radioBtnActive: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
+  radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
+  answerInput: { flex: 1, color: colors.textPrimary, padding: 0 },
+  correctBadge: { fontSize: 11, fontWeight: "600", color: "#166534", backgroundColor: "#DCFCE7", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  actions: { flexDirection: "row", justifyContent: "flex-end", gap: 12, marginTop: 10 },
+  btnPrimary: { backgroundColor: colors.primary, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 12, minWidth: 120, alignItems: "center" },
+  btnSecondary: { backgroundColor: colors.white, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 12, borderWidth: 1.5, borderColor: colors.border },
+  btnText: { color: "#FFF", fontWeight: "600", fontSize: 15 },
+  btnTextSecondary: { color: colors.textSecondary, fontWeight: "500", fontSize: 15 },
+  successBox: { flex: 1, alignItems: "center", justifyContent: "center", padding: 30, marginTop: 100 },
+  successIcon: { fontSize: 40, color: "#166534", backgroundColor: "#DCFCE7", width: 60, height: 60, borderRadius: 30, textAlign: "center", textAlignVertical: "center", overflow: "hidden", marginBottom: 16 },
+  successTitle: { fontSize: 20, fontWeight: "700", color: colors.textPrimary, marginBottom: 8 },
+  successSub: { fontSize: 14, color: colors.textSecondary, textAlign: "center", marginBottom: 24 }
+});
