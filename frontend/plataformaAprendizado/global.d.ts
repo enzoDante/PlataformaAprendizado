@@ -1,9 +1,6 @@
-declare global {
-  namespace NodeJS {
-    interface ProcessEnv {
-      EXPO_PUBLIC_API_URL: string;
-    }
-  }
-}
-
-export {};
+declare var process: {
+  env: {
+    EXPO_PUBLIC_API_URL: string;
+    [key: string]: string | undefined;
+  };
+};
