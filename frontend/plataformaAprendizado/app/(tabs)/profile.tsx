@@ -27,8 +27,8 @@ export default function Profile() {
   useEffect(() => {
       async function checkRole() {
         try {
-          const role = await AsyncStorage.getItem("user_role");
-          if (role === "ADMIN") {
+          const role = await AsyncStorage.getItem("@auth:user");
+          if (role === "Admin") {
             setIsAdmin(true);
           }
         } catch (error) {
