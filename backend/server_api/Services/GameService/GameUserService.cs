@@ -122,7 +122,40 @@ namespace server_api.Services.GameService
             return false;
         }
         // criar os métodos que retornam qualquer informação do jogo, como as seções, as classes, etc. para o usuário poder acessar
+        public async Task AddDailyPointsAndUpdateStreak(int points)
+        {
+            var stats = await _context.UserGameStats.FirstOrDefaultAsync(s => s.UserId == _userId);
+            if (stats == null) throw new ArgumentException("Estatísticas do usuário não encontradas");
 
+            var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
 
+            // Se a última atividade não foi hoje, é um novo dia: precisamos decidir o que fazer com o streak
+            if (stats.LastActivityDate != hoje)
+            {
+                int diasSemAtividade = hoje.DayNumber - stats.LastActivityDate.DayNumber;
+
+                // Perde a ofensiva se pulou mais de 1 dia OU não bateu a meta no último dia registrado
+                if (diasSemAtividade > 1 || !stats.DailyGoalReachedToday)
+                {
+                    stats.StreakDays = 0;
+                }
+
+                stats.DailyPointsEarned = 0;
+                stats.DailyGoalReachedToday = false;
+                stats.LastActivityDate = hoje;
+            }
+
+            stats.DailyPointsEarned += points;
+            stats.ExperiencePoints += points;
+
+            if (!stats.DailyGoalReachedToday && stats.DailyPointsEarned >= stats.DailyGoal)
+            {
+                stats.DailyGoalReachedToday = true;
+                stats.StreakDays += 1;
+            }
+
+            stats.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+        }
     }
 }
