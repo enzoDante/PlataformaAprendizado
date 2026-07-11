@@ -6,6 +6,9 @@
         public int UserId { get; set; }
         public virtual Users Users { get; set; } = null!;
 
+        public int DailyGoal { get; set; } = 50;
+        public int DailyPointsEarned { get; set; } = 0;
+        public bool DailyGoalReachedToday { get; set; } = false;
         public int Lives { get; set; }
         public int ExperiencePoints { get; set; }
         public int Level { get; set; }
