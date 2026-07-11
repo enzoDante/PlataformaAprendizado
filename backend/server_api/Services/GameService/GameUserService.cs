@@ -100,17 +100,28 @@ namespace server_api.Services.GameService
             return classes.Select(c => _mapper.Map<ClassResponse>(c)); // retorna as classes mapeadas para o DTO ClassResponse
         }
 
-        public async Task<bool> ClassCompleted(int classId) //caso a classe já tenha sido completada, retorna true, caso contrário, cria um registro de UserLesson para o usuário e retorna false
+        public async Task<bool> ClassCompleted(int classId)
         {
             ClassLevel? classLevel = await _context.ClassLevels.Include(g => g.UserLessons).FirstOrDefaultAsync(g => g.Id == classId);
-            if(classLevel == null) throw new ArgumentException("Classe não encontrada");
+            if (classLevel == null) throw new ArgumentException("Classe não encontrada");
             UserLesson? userLesson = classLevel.UserLessons.FirstOrDefault(g => g.UserId == _userId);
+
             if (userLesson != null)
             {
+                bool jaEstavaCompleta = userLesson.Complete; // guarda o estado antes de mudar
+
                 userLesson.Complete = true;
                 await _context.SaveChangesAsync();
-                return true; // se o usuário já tiver completado a classe, retorna true
+
+                // só soma pontos e atualiza a ofensiva se essa for a primeira vez que a lição foi concluída
+                if (!jaEstavaCompleta)
+                {
+                    await AddDailyPointsAndUpdateStreak(classLevel.Experience);
+                }
+
+                return true;
             }
+
             userLesson = new UserLesson
             {
                 UserId = _userId,
