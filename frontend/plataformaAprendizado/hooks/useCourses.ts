@@ -1,154 +1,122 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Colors } from "@/styles/GlobalStyles";
 import { router } from "expo-router";
-import { checkEnrollmentStatus } from "@/services/courseService";
-import { getUserId } from "@/services/authService";
+import { fetchEnrolledCourses } from "@/services/courseService";
+import { getStoredUser } from "@/services/authService";
+ 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
+ 
 export type CourseStatus = "in_progress" | "completed" | "not_started";
 export type FilterTab = "Todos" | "Em andamento" | "Concluídos";
-
+ 
 export interface EnrolledCourse {
-  id: string;
+  id: string;           // "c" | "java" | "python" | "logic"
   title: string;
   instructor: string;
   category: string;
   categoryColor: string;
   emoji: string;
-  progress: number;
+  progress: number;         // 0–100
   totalLessons: number;
   completedLessons: number;
   duration: string;
   lastAccessedLesson: string;
   status: CourseStatus;
 }
-
+ 
 export interface CoursesSummary {
   total: number;
   inProgress: number;
   completed: number;
 }
-
+ 
 export interface UseCoursesReturn {
   activeFilter: FilterTab;
   filterTabs: FilterTab[];
   filteredCourses: EnrolledCourse[];
   summary: CoursesSummary;
+  loading: boolean;
+  error: string | null;
   setFilter: (tab: FilterTab) => void;
   onCoursePress: (course: EnrolledCourse) => void;
 }
-
-// ─── Data ─────────────────────────────────────────────────────────────────────
-
+ 
+// ─── Constantes ───────────────────────────────────────────────────────────────
+ 
 export const FILTER_TABS: FilterTab[] = ["Todos", "Em andamento", "Concluídos"];
-
-const ENROLLED_COURSES: EnrolledCourse[] = [
-  {
-    id: "1",
-    title: "Python",
-    instructor: "João Santos",
-    category: "Programação",
-    categoryColor: Colors.accentBlue,
-    emoji: "🐍",
-    progress: 45,
-    totalLessons: 62,
-    completedLessons: 28,
-    duration: "31h",
-    lastAccessedLesson: "Funções e Módulos",
-    status: "in_progress",
-  },
-  {
-    id: "2",
-    title: "Lógica de Programação",
-    instructor: "Ana Costa",
-    category: "Programação",
-    categoryColor: Colors.accentBlue,
-    emoji: "🧩",
-    progress: 30,
-    totalLessons: 40,
-    completedLessons: 12,
-    duration: "23h",
-    lastAccessedLesson: "Estruturas de Repetição",
-    status: "in_progress",
-  },
-  {
-    id: "3",
-    title: "Java",
-    instructor: "Maria Silva",
-    category: "Programação",
-    categoryColor: Colors.accentBlue,
-    emoji: "☕",
-    progress: 65,
-    totalLessons: 80,
-    completedLessons: 52,
-    duration: "40h",
-    lastAccessedLesson: "Orientação a Objetos",
-    status: "in_progress",
-  },
-  {
-    id: "4",
-    title: "C",
-    instructor: "Carlos Lima",
-    category: "Programação",
-    categoryColor: Colors.accentOrange,
-    emoji: "🌐",
-    progress: 100,
-    totalLessons: 35,
-    completedLessons: 35,
-    duration: "18h",
-    lastAccessedLesson: "Ponteiros Avançados",
-    status: "completed",
-  },
-];
-
+ 
+// Mapa de courseId → rota do world
+const WORLD_ROUTES: Record<string, string> = {
+  c:      "/cWorld",
+  java:   "/javaWorld",
+  python: "/pythonWorld",
+  logic:  "/logicWorld",
+};
+ 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
-
+ 
 export function useCourses(): UseCoursesReturn {
+  const [courses, setCourses] = useState<EnrolledCourse[]>([]);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("Todos");
-
-  const filteredCourses = ENROLLED_COURSES.filter((course) => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+ 
+  // Busca cursos matriculados ao montar
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+ 
+        const user = await getStoredUser();
+        if (!user?.id) {
+          router.replace("/login");
+          return;
+        }
+ 
+        const data = await fetchEnrolledCourses(Number(user.id));
+        if (!cancelled) setCourses(data);
+      } catch (e: any) {
+        if (!cancelled) setError(e.message ?? "Erro ao carregar cursos");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+ 
+  // Filtro local
+  const filteredCourses = courses.filter((course) => {
     if (activeFilter === "Em andamento")
       return course.status === "in_progress" || course.status === "not_started";
     if (activeFilter === "Concluídos")
       return course.status === "completed";
     return true;
   });
-
+ 
   const summary: CoursesSummary = {
-    total: ENROLLED_COURSES.length,
-    inProgress: ENROLLED_COURSES.filter((c) => c.status === "in_progress").length,
-    completed: ENROLLED_COURSES.filter((c) => c.status === "completed").length,
+    total: courses.length,
+    inProgress: courses.filter((c) => c.status === "in_progress").length,
+    completed: courses.filter((c) => c.status === "completed").length,
   };
-
-  const setFilter = (tab: FilterTab) => setActiveFilter(tab);
-
-  const onCoursePress = async (course: EnrolledCourse) => {
-    try {
-      const userId = await getUserId();
-      if (!userId) {
-      alert("Sessão expirada. Faça login novamente.");
-      router.replace("/login");
-      return;
+ 
+  // Press: navega direto para o world (já está matriculado por definição)
+  const onCoursePress = useCallback((course: EnrolledCourse) => {
+    const route = WORLD_ROUTES[course.id];
+    if (route) {
+      router.push(route as any);
     }
-      const gameId = parseInt(course.id);
-      const isEnrolled = await checkEnrollmentStatus(userId, gameId);
-
-      if (isEnrolled) {
-        router.push(`/worlds/${course.id}`); 
-      } else {
-        router.push(`/enrollment/${course.id}`);
-      }
-    } catch (error) {
-      alert("Não foi possível verificar seu acesso. Tente novamente.");
-    }
-  };
-
+  }, []);
+ 
   return {
     activeFilter,
     filterTabs: FILTER_TABS,
     filteredCourses,
     summary,
-    setFilter,
+    loading,
+    error,
+    setFilter: setActiveFilter,
     onCoursePress,
   };
 }
