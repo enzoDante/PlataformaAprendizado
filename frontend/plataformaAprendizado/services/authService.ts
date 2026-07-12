@@ -48,7 +48,7 @@ async function request<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_BASE}/${path}`;
-
+  console.log("verificando se tem env", url)
   const response = await fetch(url, {
     ...options,
     headers: {

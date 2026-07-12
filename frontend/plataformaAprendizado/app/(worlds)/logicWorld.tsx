@@ -1,108 +1,123 @@
-import React from "react";
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
-import { GlobalStyles, Colors, Typography, Spacing, Radii } from "../../styles/GlobalStyles";
+import React, { useRef, useState } from "react";
+import {
+  View, Text, ScrollView, TouchableOpacity,
+  StyleSheet, ActivityIndicator, Animated,
+} from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-
-// 1. Definição do formato de cada fase
-interface Phase {
-  id: number;
-  titulo: string;
-  descricao: string;
-  xpGanha: number;
-}
-
-export default function LogicWorld() {
-  // 2. Dados Fictícios das fases do Mundo de Lógica
-  const listaDeFases: Phase[] = [
-    { id: 1, titulo: "Introdução à Lógica", descricao: "O que são algoritmos?", xpGanha: 100 },
-    { id: 2, titulo: "Variáveis e Constantes", descricao: "Guardando dados na memória", xpGanha: 120 },
-    { id: 3, titulo: "Estruturas Condicionais", descricao: "Trabalhando com Se e Senão", xpGanha: 150 },
-    { id: 4, titulo: "Operadores Lógicos", descricao: "E, OU e NÃO (AND, OR, NOT)", xpGanha: 180 },
-    { id: 5, titulo: "Estruturas de Repetição", descricao: "Dominando loops (Para e Enquanto)", xpGanha: 200 },
-  ];
-
-  // 3. A FASE ATUAL DO JOGADOR (Simulação)
-  // Mude esse número para 1, 2, 3 ou 4 para ver o mapa se comportar e bloquear/liberar automaticamente!
-  const faseAtualDoUsuario = 3; 
-
-  // 4. Função disparada ao clicar em uma fase liberada
-  const iniciarFase = (faseId: number) => {
-    alert(`Iniciando a fase ${faseId}! Redirecionando para a tela do quiz...`);
-    // Futuramente vocês mandam para a tela dinâmica do nível:
-    // router.push({ pathname: "/levelScreen", params: { id: faseId } });
+import { GlobalStyles, Colors, Typography, Spacing, Radii } from "@/styles/GlobalStyles";
+import { useCourseDetail } from "@/hooks/useCourseDetail";
+ 
+const COURSE_ID = "logic";
+ 
+export default function CWorld() {
+  const { levels, isLoading, error } = useCourseDetail(COURSE_ID);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+ 
+  const selectedLevel = levels.find((l) => l.id === selectedId) ?? null;
+ 
+  const handleCardPress = (id: string, status: string) => {
+    if (status === "locked") return;
+    setSelectedId((prev) => (prev === id ? null : id));
   };
-
+ 
+  const handleStart = () => {
+    if (!selectedId) return;
+    router.push(`/course/${COURSE_ID}/${selectedId}`);
+  };
+ 
   return (
     <View style={GlobalStyles.screen}>
-      {/* Topo da Tela */}
       <View style={styles.header}>
-        <Text style={GlobalStyles.headingXL}>Mundo de Lógica 🧠</Text>
-        <Text style={GlobalStyles.bodySM}>Complete as fases para evoluir sua pontuação</Text>
+        <Text style={GlobalStyles.headingXL}>Lógica de Programação 🧠</Text>
+        <Text style={GlobalStyles.bodySM}>Fundamentos de algoritmos e raciocínio computacional</Text>
       </View>
-
-      <ScrollView 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContainer}
-      >
-        {listaDeFases.map((fase, index) => {
-          // Descobre o status da fase com base no ID
-          const concluida = fase.id < faseAtualDoUsuario;
-          const atual = fase.id === faseAtualDoUsuario;
-          const bloqueada = fase.id > faseAtualDoUsuario;
-
-          return (
-            <View key={fase.id} style={styles.faseWrapper}>
-              
-              {/* Linha conectora visual entre as fases (estilo Duolingo) */}
-              {index < listaDeFases.length - 1 && <View style={styles.connectorLine} />}
-
-              <TouchableOpacity
-                style={[
-                  styles.cardFase,
-                  concluida && styles.cardConcluido,
-                  atual && styles.cardAtual,
-                  bloqueada && styles.cardBloqueado
-                ]}
-                disabled={bloqueada}
-                onPress={() => iniciarFase(fase.id)}
-                activeOpacity={0.8}
-              >
-                {/* Lado Esquerdo: Ícone de Status */}
-                <View style={styles.iconContainer}>
-                  {concluida && <Ionicons name="checkmark-circle" size={28} color={Colors.accentGreen} />}
-                  {atual && <Ionicons name="play-circle" size={32} color={Colors.primary} />}
-                  {bloqueada && <Ionicons name="lock-closed" size={24} color={Colors.textMuted} />}
-                </View>
-
-                {/* Lado Direito: Textos Informativos */}
-                <View style={styles.infoContainer}>
-                  <Text style={[
-                    styles.tituloFase, 
-                    bloqueada && { color: Colors.textMuted },
-                    concluida && { textDecorationLine: 'line-through', color: Colors.textSecondary }
-                  ]}>
-                    Nível {fase.id}: {fase.titulo}
-                  </Text>
-                  
-                  <Text style={[styles.descricaoFase, bloqueada && { color: Colors.textMuted }]}>
-                    {bloqueada ? "Alcance a fase anterior para desbloquear" : fase.descricao}
-                  </Text>
-
-                  {!bloqueada && (
-                    <Text style={styles.xpText}>+{fase.xpGanha} XP</Text>
-                  )}
-                </View>
-              </TouchableOpacity>
-            </View>
-          );
-        })}
-      </ScrollView>
+ 
+      {isLoading && (
+        <View style={[GlobalStyles.centered, { flex: 1 }]}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+        </View>
+      )}
+ 
+      {!!error && !isLoading && (
+        <View style={styles.errorBanner}>
+          <Ionicons name="alert-circle-outline" size={16} color="#B91C1C" />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
+ 
+      {!isLoading && !error && (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          {levels.map((level, index) => {
+            const isCompleted = level.status === "completed";
+            const isAvailable = level.status === "available";
+            const isLocked = level.status === "locked";
+            const isSelected = selectedId === level.id;
+ 
+            return (
+              <View key={level.id} style={styles.faseWrapper}>
+                {/* Connector line */}
+                {index < levels.length - 1 && (
+                  <View style={[
+                    styles.connectorLine,
+                    isCompleted && styles.connectorDone,
+                  ]} />
+                )}
+ 
+                {/* Balão ao selecionar */}
+                {isSelected && selectedLevel && (
+                  <View style={styles.balloon}>
+                    <Text style={styles.balloonTitle}>{selectedLevel.title}</Text>
+                    <TouchableOpacity style={styles.balloonBtn} onPress={handleStart} activeOpacity={0.85}>
+                      <Text style={styles.balloonBtnText}>Começar</Text>
+                    </TouchableOpacity>
+                    <View style={styles.balloonArrow} />
+                  </View>
+                )}
+ 
+                <TouchableOpacity
+                  style={[
+                    styles.cardFase,
+                    isCompleted && styles.cardConcluido,
+                    isAvailable && styles.cardAtual,
+                    isLocked && styles.cardBloqueado,
+                  ]}
+                  disabled={isLocked}
+                  onPress={() => handleCardPress(level.id, level.status)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.iconContainer}>
+                    {isCompleted && <Ionicons name="checkmark-circle" size={28} color={Colors.accentGreen} />}
+                    {isAvailable && <Ionicons name="play-circle" size={32} color={Colors.primary} />}
+                    {isLocked && <Ionicons name="lock-closed" size={24} color={Colors.textMuted} />}
+                  </View>
+                  <View style={styles.infoContainer}>
+                    <Text style={[
+                      styles.tituloFase,
+                      isLocked && { color: Colors.textMuted },
+                      isCompleted && { textDecorationLine: "line-through", color: Colors.textSecondary },
+                    ]}>
+                      Nível {level.number}: {level.title}
+                    </Text>
+                    <Text style={[styles.descricaoFase, isLocked && { color: Colors.textMuted }]}>
+                      {isLocked ? "Bloqueado" : level.description}
+                    </Text>
+                    {!isLocked && <Text style={styles.xpText}>+{level.xp} XP</Text>}
+                  </View>
+                </TouchableOpacity>
+              </View>
+            );
+          })}
+        </ScrollView>
+      )}
     </View>
   );
 }
-
-// ─── Estilos Customizados da Trilha ────────────────────────────
+ 
 const styles = StyleSheet.create({
   header: {
     paddingTop: Spacing.xxl,
@@ -115,6 +130,20 @@ const styles = StyleSheet.create({
   scrollContainer: {
     padding: Spacing.lg,
     paddingBottom: Spacing.xxl,
+  },
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+    backgroundColor: "#FEE2E2",
+    borderRadius: Radii.sm,
+    margin: Spacing.lg,
+    padding: Spacing.sm,
+  },
+  errorText: {
+    fontSize: Typography.sm,
+    color: "#B91C1C",
+    flex: 1,
   },
   faseWrapper: {
     alignItems: "center",
@@ -129,6 +158,57 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.border,
     zIndex: -1,
   },
+  connectorDone: {
+    backgroundColor: Colors.accentGreen + "60",
+  },
+ 
+  // Balão
+  balloon: {
+    width: "100%",
+    backgroundColor: Colors.background,
+    borderRadius: Radii.md,
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    padding: Spacing.md,
+    marginBottom: Spacing.sm,
+    alignItems: "center",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  balloonTitle: {
+    fontSize: Typography.base,
+    fontWeight: Typography.semiBold,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.sm,
+    textAlign: "center",
+  },
+  balloonBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radii.md,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.xl,
+  },
+  balloonBtnText: {
+    fontSize: Typography.base,
+    fontWeight: Typography.bold,
+    color: Colors.textOnPrimary,
+  },
+  balloonArrow: {
+    position: "absolute",
+    bottom: -8,
+    width: 14,
+    height: 14,
+    backgroundColor: Colors.background,
+    borderRightWidth: 1.5,
+    borderBottomWidth: 1.5,
+    borderColor: Colors.primary,
+    transform: [{ rotate: "45deg" }],
+  },
+ 
+  // Cards
   cardFase: {
     flexDirection: "row",
     width: "100%",
@@ -163,9 +243,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: Spacing.sm,
   },
-  infoContainer: {
-    flex: 1,
-  },
+  infoContainer: { flex: 1 },
   tituloFase: {
     fontSize: Typography.base,
     fontWeight: Typography.bold,

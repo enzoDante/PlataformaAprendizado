@@ -20,7 +20,6 @@ export default function CWorld() {
     { id: 5, titulo: "Ponteiros Básicos", descricao: "Entendendo endereços de memória", xpGanha: 250 },
   ];
 
-  // Simulação da fase atual do utilizador neste mundo
   const faseAtualDoUsuario = 1; 
 
   const iniciarFase = (faseId: number) => {

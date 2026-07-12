@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { GlobalStyles, Colors, Typography, Spacing, Radii } from "../../styles/GlobalStyles";
 import { router } from "expo-router";
-import { login } from "../../services/authService"; // ajuste o caminho se necessário
+import { login } from "../../services/authService"; 
 
 export default function Login() {
   const [email, setEmail] = useState("");

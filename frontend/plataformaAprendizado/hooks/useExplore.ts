@@ -1,138 +1,104 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { router } from "expo-router";
 import { Colors } from "@/styles/GlobalStyles";
-
+import {
+  fetchCourses,
+  checkEnrollment,
+  enrollInCourse,
+  CourseDTO,
+} from "@/services/exploreService";
+ 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
+ 
 export type CourseLevel = "Iniciante" | "Intermediário" | "Avançado";
-
-export interface ExploreCourse {
-  id: string;
-  title: string;
-  instructor: string;
-  category: string;
-  categoryColor: string;
-  rating: number;
-  students: string;
-  duration: string;
-  emoji: string;
-  level: CourseLevel;
-}
-
-export interface UseExploreReturn {
-  search: string;
-  selectedCategory: string;
-  categories: string[];
-  filteredCourses: ExploreCourse[];
-  setSearch: (value: string) => void;
-  clearSearch: () => void;
-  setCategory: (category: string) => void;
-  onCoursePress: (course: ExploreCourse) => void;
-}
-
-// ─── Data ─────────────────────────────────────────────────────────────────────
-
+ 
+export type ExploreCourse = CourseDTO;
+ 
 export const LEVEL_COLORS: Record<CourseLevel, string> = {
   Iniciante: Colors.accentGreen,
   Intermediário: Colors.accentOrange,
   Avançado: Colors.error,
 };
-
+ 
+// Mapa de categoria → rota (ajuste os paths conforme seu _layout.tsx)
+const CATEGORY_ROUTE: Record<string, string> = {
+  C:       "/cWorld",
+  Java:    "/javaWorld",
+  Python:  "/pythonWorld",
+  Logic:   "/logicWorld",
+};
+ 
 const CATEGORIES = ["Todos", "Programação", "Web", "Mobile", "Banco de Dados"];
-
-const ALL_COURSES: ExploreCourse[] = [
-  {
-    id: "1",
-    title: "Python",
-    instructor: "João Santos",
-    category: "Programação",
-    categoryColor: Colors.accentBlue,
-    rating: 4.9,
-    students: "6.921",
-    duration: "31h",
-    emoji: "🐍",
-    level: "Iniciante",
-  },
-  {
-    id: "2",
-    title: "Lógica de Programação",
-    instructor: "Ana Costa",
-    category: "Programação",
-    categoryColor: Colors.accentBlue,
-    rating: 4.7,
-    students: "12.4k",
-    duration: "23h",
-    emoji: "🧩",
-    level: "Iniciante",
-  },
-  {
-    id: "3",
-    title: "Java",
-    instructor: "Maria Silva",
-    category: "Programação",
-    categoryColor: Colors.accentBlue,
-    rating: 4.8,
-    students: "15.2k",
-    duration: "40h",
-    emoji: "☕",
-    level: "Intermediário",
-  },
-  {
-    id: "4",
-    title: "C",
-    instructor: "Carlos Lima",
-    category: "Programação",
-    categoryColor: Colors.accentBlue,
-    rating: 4.6,
-    students: "20.1k",
-    duration: "18h",
-    emoji: "🌐",
-    level: "Iniciante",
-  },
-  {
-    id: "5",
-    title: "HTML & CSS",
-    instructor: "Pedro Alves",
-    category: "Web",
-    categoryColor: Colors.accentOrange,
-    rating: 4.6,
-    students: "18.3k",
-    duration: "16h",
-    emoji: "🎨",
-    level: "Iniciante",
-  },
-  {
-    id: "6",
-    title: "React Native",
-    instructor: "Lucas Mendes",
-    category: "Mobile",
-    categoryColor: Colors.accentPurple,
-    rating: 4.8,
-    students: "7.8k",
-    duration: "42h",
-    emoji: "📱",
-    level: "Intermediário",
-  },
-  {
-    id: "7",
-    title: "SQL",
-    instructor: "Rafael Souza",
-    category: "Banco de Dados",
-    categoryColor: Colors.accentGreen,
-    rating: 4.5,
-    students: "11.6k",
-    duration: "20h",
-    emoji: "🗄️",
-    level: "Iniciante",
-  },
-];
-
+ 
+// ─── Modal state ──────────────────────────────────────────────────────────────
+ 
+export interface EnrollModalState {
+  visible: boolean;
+  course: ExploreCourse | null;
+  enrolling: boolean;   // loading durante a chamada de matrícula
+  error: string | null;
+}
+ 
+// ─── Return type ──────────────────────────────────────────────────────────────
+ 
+export interface UseExploreReturn {
+  // lista + filtros
+  search: string;
+  selectedCategory: string;
+  categories: string[];
+  filteredCourses: ExploreCourse[];
+  loading: boolean;
+  error: string | null;
+  // ações de filtro
+  setSearch: (value: string) => void;
+  clearSearch: () => void;
+  setCategory: (category: string) => void;
+  // press no card
+  onCoursePress: (course: ExploreCourse) => void;
+  checkingEnrollment: boolean;
+  // modal de matrícula
+  enrollModal: EnrollModalState;
+  confirmEnroll: () => Promise<void>;
+  dismissModal: () => void;
+}
+ 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
-
+ 
 export function useExplore(): UseExploreReturn {
+  const [courses, setCourses] = useState<ExploreCourse[]>([]);
   const [search, setSearchValue] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todos");
-
-  const filteredCourses = ALL_COURSES.filter((course) => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [checkingEnrollment, setCheckingEnrollment] = useState(false);
+ 
+  const [enrollModal, setEnrollModal] = useState<EnrollModalState>({
+    visible: false,
+    course: null,
+    enrolling: false,
+    error: null,
+  });
+ 
+  // ── Busca cursos do backend ao montar ──────────────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchCourses();
+        if (!cancelled) setCourses(data);
+      } catch (e: any) {
+        if (!cancelled) setError(e.message ?? "Erro ao carregar cursos");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+ 
+  // ── Filtro local ──────────────────────────────────────────────────────────
+  const filteredCourses = courses.filter((course) => {
     const matchesCategory =
       selectedCategory === "Todos" || course.category === selectedCategory;
     const matchesSearch =
@@ -141,22 +107,68 @@ export function useExplore(): UseExploreReturn {
       course.instructor.toLowerCase().includes(search.toLowerCase());
     return matchesCategory && matchesSearch;
   });
-
-  const setSearch = (value: string) => setSearchValue(value);
-  const clearSearch = () => setSearchValue("");
-  const setCategory = (category: string) => setSelectedCategory(category);
-  const onCoursePress = (course: ExploreCourse) => {
-    console.log("Course pressed:", course.title);
-  };
-
+ 
+  // ── Press no card: verifica matrícula ─────────────────────────────────────
+  const onCoursePress = useCallback(async (course: ExploreCourse) => {
+    try {
+      setCheckingEnrollment(true);
+      const enrolled = await checkEnrollment(course.id);
+ 
+      if (enrolled) {
+        // Já matriculado → navega para a trilha correspondente
+        const route = CATEGORY_ROUTE[course.category];
+        if (route) {
+          router.push(route as any);
+        }
+      } else {
+        // Não matriculado → abre modal de confirmação
+        setEnrollModal({ visible: true, course, enrolling: false, error: null });
+      }
+    } catch (e: any) {
+      setEnrollModal({ visible: true, course, enrolling: false, error: e.message });
+    } finally {
+      setCheckingEnrollment(false);
+    }
+  }, []);
+ 
+  // ── Confirma matrícula no modal ───────────────────────────────────────────
+  const confirmEnroll = useCallback(async () => {
+    if (!enrollModal.course) return;
+    try {
+      setEnrollModal((prev) => ({ ...prev, enrolling: true, error: null }));
+      await enrollInCourse(enrollModal.course.id);
+      // Matrícula OK → fecha modal e navega
+      const route = CATEGORY_ROUTE[enrollModal.course.category];
+      setEnrollModal({ visible: false, course: null, enrolling: false, error: null });
+      if (route) router.push(route as any);
+    } catch (e: any) {
+      setEnrollModal((prev) => ({
+        ...prev,
+        enrolling: false,
+        error: e.message ?? "Erro ao se matricular",
+      }));
+    }
+  }, [enrollModal.course]);
+ 
+  // ── Fecha modal sem fazer nada ────────────────────────────────────────────
+  const dismissModal = useCallback(() => {
+    setEnrollModal({ visible: false, course: null, enrolling: false, error: null });
+  }, []);
+ 
   return {
     search,
     selectedCategory,
     categories: CATEGORIES,
     filteredCourses,
-    setSearch,
-    clearSearch,
-    setCategory,
+    loading,
+    error,
+    setSearch: setSearchValue,
+    clearSearch: () => setSearchValue(""),
+    setCategory: setSelectedCategory,
     onCoursePress,
+    checkingEnrollment,
+    enrollModal,
+    confirmEnroll,
+    dismissModal,
   };
 }

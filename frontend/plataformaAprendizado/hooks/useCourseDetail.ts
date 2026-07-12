@@ -2,8 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { CourseDetail, CourseLevel } from "@/types/courseTypes";
 import { getAccessToken } from "@/services/authService";
 
-// ─── Replace with your real base URL ─────────────────────────────────────────
-const API_BASE = "https://your-api.com";
+const API_BASE = process.env.EXPO_PUBLIC_API_URL;
 
 
 export interface UseCourseDetailReturn {
