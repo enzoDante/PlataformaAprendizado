@@ -125,3 +125,8 @@ create table user_lesson(
 	constraint fk_userlesson_userid foreign key (user_id) references users(id) on delete cascade,
 	constraint fk_userlesson_classid foreign key (class_id) references class_level(id) on delete cascade
 );
+
+INSERT INTO achievements (code, name, description, icon_url, points) VALUES
+('STREAK_10', '10 dias seguidos', 'Estudou por 10 dias consecutivos', '', 50),
+('PHASE_3_COMPLETE', 'Terceira fase concluída', 'Concluiu a fase 3 do curso', '', 100),
+('NO_MISTAKES_5', 'Sem erros', 'Completou 5 tarefas sem cometer erros', '', 30);
