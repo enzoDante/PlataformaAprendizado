@@ -168,5 +168,22 @@ namespace server_api.Services.GameService
             stats.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
         }
+        public async Task CheckAndGrantAchievement(int userId, string code)
+        {
+            var achievement = await _context.Achievements.FirstOrDefaultAsync(a => a.Code == code);
+            if (achievement == null) return;
+
+            bool jaTem = await _context.UserAchievements
+            .AnyAsync(ua => ua.UserId == userId && ua.AchievementId == achievement.Id);
+            if (jaTem) return;
+
+            _context.UserAchievements.Add(new UserAchievements
+            {
+                UserId = userId,
+                AchievementId = achievement.Id,
+                UnlockedAt = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
+        }
     }
 }
