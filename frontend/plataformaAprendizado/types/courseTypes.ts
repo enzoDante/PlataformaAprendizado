@@ -19,7 +19,7 @@ export interface LevelExercise {
   explanation: string;
 }
 
-// ─── A level inside a course ──────────────────────────────────────────────────
+// ─── Raw level (vindo da API ou dos mocks) — sem status ──────────────────────
 
 export interface CourseLevel {
   id: string;
@@ -27,11 +27,16 @@ export interface CourseLevel {
   title: string;
   description: string;
   xp: number;
-  status: LevelStatus;
   exercises: LevelExercise[];
 }
 
-// ─── Course detail (returned by the API) ──────────────────────────────────────
+// ─── Level com status calculado (usado nas telas dos worlds) ─────────────────
+
+export interface CourseLevelWithStatus extends CourseLevel {
+  status: LevelStatus;
+}
+
+// ─── Course detail (retornado pela API ou pelos mocks) ───────────────────────
 
 export interface CourseDetail {
   id: string;

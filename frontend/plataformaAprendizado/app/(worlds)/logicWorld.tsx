@@ -1,123 +1,120 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Animated,
+  StyleSheet, ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { GlobalStyles, Colors, Typography, Spacing, Radii } from "@/styles/GlobalStyles";
 import { useCourseDetail } from "@/hooks/useCourseDetail";
- 
-const COURSE_ID = "logic";
- 
+
+const COURSE_ID = "python";
+
 export default function CWorld() {
   const { levels, isLoading, error } = useCourseDetail(COURSE_ID);
   const [selectedId, setSelectedId] = useState<string | null>(null);
- 
   const selectedLevel = levels.find((l) => l.id === selectedId) ?? null;
- 
+
   const handleCardPress = (id: string, status: string) => {
     if (status === "locked") return;
     setSelectedId((prev) => (prev === id ? null : id));
   };
- 
+
   const handleStart = () => {
     if (!selectedId) return;
     router.push(`/course/${COURSE_ID}/${selectedId}`);
   };
- 
+
+  if (isLoading) {
+    return (
+      <View style={[GlobalStyles.screen, GlobalStyles.centered]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[GlobalStyles.screen, GlobalStyles.centered]}>
+        <Text style={{ color: Colors.error }}>{error}</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={GlobalStyles.screen}>
       <View style={styles.header}>
-        <Text style={GlobalStyles.headingXL}>Lógica de Programação 🧠</Text>
-        <Text style={GlobalStyles.bodySM}>Fundamentos de algoritmos e raciocínio computacional</Text>
+        <Text style={GlobalStyles.headingXL}>Python 🐍</Text>
+        <Text style={GlobalStyles.bodySM}>Da sintaxe básica à automação e análise de dados</Text>
       </View>
- 
-      {isLoading && (
-        <View style={[GlobalStyles.centered, { flex: 1 }]}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-        </View>
-      )}
- 
-      {!!error && !isLoading && (
-        <View style={styles.errorBanner}>
-          <Ionicons name="alert-circle-outline" size={16} color="#B91C1C" />
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      )}
- 
-      {!isLoading && !error && (
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
-        >
-          {levels.map((level, index) => {
-            const isCompleted = level.status === "completed";
-            const isAvailable = level.status === "available";
-            const isLocked = level.status === "locked";
-            const isSelected = selectedId === level.id;
- 
-            return (
-              <View key={level.id} style={styles.faseWrapper}>
-                {/* Connector line */}
-                {index < levels.length - 1 && (
-                  <View style={[
-                    styles.connectorLine,
-                    isCompleted && styles.connectorDone,
-                  ]} />
-                )}
- 
-                {/* Balão ao selecionar */}
-                {isSelected && selectedLevel && (
-                  <View style={styles.balloon}>
-                    <Text style={styles.balloonTitle}>{selectedLevel.title}</Text>
-                    <TouchableOpacity style={styles.balloonBtn} onPress={handleStart} activeOpacity={0.85}>
-                      <Text style={styles.balloonBtnText}>Começar</Text>
-                    </TouchableOpacity>
-                    <View style={styles.balloonArrow} />
-                  </View>
-                )}
- 
-                <TouchableOpacity
-                  style={[
-                    styles.cardFase,
-                    isCompleted && styles.cardConcluido,
-                    isAvailable && styles.cardAtual,
-                    isLocked && styles.cardBloqueado,
-                  ]}
-                  disabled={isLocked}
-                  onPress={() => handleCardPress(level.id, level.status)}
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.iconContainer}>
-                    {isCompleted && <Ionicons name="checkmark-circle" size={28} color={Colors.accentGreen} />}
-                    {isAvailable && <Ionicons name="play-circle" size={32} color={Colors.primary} />}
-                    {isLocked && <Ionicons name="lock-closed" size={24} color={Colors.textMuted} />}
-                  </View>
-                  <View style={styles.infoContainer}>
-                    <Text style={[
-                      styles.tituloFase,
-                      isLocked && { color: Colors.textMuted },
-                      isCompleted && { textDecorationLine: "line-through", color: Colors.textSecondary },
-                    ]}>
-                      Nível {level.number}: {level.title}
-                    </Text>
-                    <Text style={[styles.descricaoFase, isLocked && { color: Colors.textMuted }]}>
-                      {isLocked ? "Bloqueado" : level.description}
-                    </Text>
-                    {!isLocked && <Text style={styles.xpText}>+{level.xp} XP</Text>}
-                  </View>
-                </TouchableOpacity>
-              </View>
-            );
-          })}
-        </ScrollView>
-      )}
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+      >
+        {levels.map((level, index) => {
+          const isCompleted = level.status === "completed";
+          const isAvailable = level.status === "available";
+          const isLocked = level.status === "locked";
+          const isSelected = selectedId === level.id;
+
+          return (
+            <View key={level.id} style={styles.faseWrapper}>
+              {/* Linha conectora */}
+              {index < levels.length - 1 && (
+                <View style={[styles.connectorLine, isCompleted && styles.connectorDone]} />
+              )}
+
+              {/* Balão */}
+              {isSelected && selectedLevel && (
+                <View style={styles.balloon}>
+                  <Text style={styles.balloonTitle}>{selectedLevel.title}</Text>
+                  <TouchableOpacity style={styles.balloonBtn} onPress={handleStart} activeOpacity={0.85}>
+                    <Text style={styles.balloonBtnText}>Começar</Text>
+                  </TouchableOpacity>
+                  <View style={styles.balloonArrow} />
+                </View>
+              )}
+
+              <TouchableOpacity
+                style={[
+                  styles.cardFase,
+                  isCompleted && styles.cardConcluido,
+                  isAvailable && styles.cardAtual,
+                  isLocked && styles.cardBloqueado,
+                ]}
+                disabled={isLocked}
+                onPress={() => handleCardPress(level.id, level.status)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.iconContainer}>
+                  {isCompleted && <Ionicons name="checkmark-circle" size={28} color={Colors.accentGreen} />}
+                  {isAvailable && <Ionicons name="play-circle" size={32} color={Colors.primary} />}
+                  {isLocked && <Ionicons name="lock-closed" size={24} color={Colors.textMuted} />}
+                </View>
+                <View style={styles.infoContainer}>
+                  <Text style={[
+                    styles.tituloFase,
+                    isLocked && { color: Colors.textMuted },
+                    isCompleted && { textDecorationLine: "line-through", color: Colors.textSecondary },
+                  ]}>
+                    Nível {level.number}: {level.title}
+                  </Text>
+                  <Text style={[styles.descricaoFase, isLocked && { color: Colors.textMuted }]}>
+                    {isLocked ? "Bloqueado" : level.description}
+                  </Text>
+                  {!isLocked && <Text style={styles.xpText}>+{level.xp} XP</Text>}
+                </View>
+              </TouchableOpacity>
+            </View>
+          );
+        })}
+      </ScrollView>
     </View>
   );
 }
- 
+
 const styles = StyleSheet.create({
   header: {
     paddingTop: Spacing.xxl,
@@ -130,20 +127,6 @@ const styles = StyleSheet.create({
   scrollContainer: {
     padding: Spacing.lg,
     paddingBottom: Spacing.xxl,
-  },
-  errorBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-    backgroundColor: "#FEE2E2",
-    borderRadius: Radii.sm,
-    margin: Spacing.lg,
-    padding: Spacing.sm,
-  },
-  errorText: {
-    fontSize: Typography.sm,
-    color: "#B91C1C",
-    flex: 1,
   },
   faseWrapper: {
     alignItems: "center",
@@ -161,8 +144,6 @@ const styles = StyleSheet.create({
   connectorDone: {
     backgroundColor: Colors.accentGreen + "60",
   },
- 
-  // Balão
   balloon: {
     width: "100%",
     backgroundColor: Colors.background,
@@ -207,8 +188,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
     transform: [{ rotate: "45deg" }],
   },
- 
-  // Cards
   cardFase: {
     flexDirection: "row",
     width: "100%",

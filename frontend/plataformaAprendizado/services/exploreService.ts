@@ -5,7 +5,7 @@ const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 // ─── DTOs ─────────────────────────────────────────────────────────────────────
  
 export interface CourseDTO {
-  id: number;
+  id: string;
   title: string;
   instructor: string;
   category: string;       // "Programação" | "Web" | "Mobile" | "Banco de Dados"
@@ -38,7 +38,7 @@ export async function fetchCourses(): Promise<CourseDTO[]> {
 }
  
 /** Verifica se o usuário está matriculado no curso. */
-export async function checkEnrollment(courseId: number): Promise<boolean> {
+export async function checkEnrollment(courseId: string): Promise<boolean> {
   const headers = await authHeaders();
   const res = await fetch(`${BASE_URL}/api/courses/${courseId}/enrollment`, { headers });
   if (!res.ok) throw new Error("Erro ao verificar matrícula");
@@ -47,7 +47,7 @@ export async function checkEnrollment(courseId: number): Promise<boolean> {
 }
  
 /** Matricula o usuário no curso. */
-export async function enrollInCourse(courseId: number): Promise<void> {
+export async function enrollInCourse(courseId: string): Promise<void> {
   const headers = await authHeaders();
   const res = await fetch(`${BASE_URL}/api/courses/${courseId}/enroll`, {
     method: "POST",

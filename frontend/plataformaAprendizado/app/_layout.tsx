@@ -21,21 +21,12 @@ export default function RootLayout() {
     async function verifyAuth() {
       try {
         const token = await getAccessToken();
-
-        
         const isAuthScreen = segments[0] === '(auth)';
 
         if (!token) {
-          
-          if (!isAuthScreen) {
-            
-            router.replace('/login');
-          }
+          if (!isAuthScreen) router.replace('/login');
         } else {
-          
-          if (isAuthScreen) {
-            router.replace('/');
-          }
+          if (isAuthScreen) router.replace('/');
         }
       } catch (error) {
         console.error("Erro na validação de rotas:", error);
@@ -47,29 +38,27 @@ export default function RootLayout() {
     verifyAuth();
   }, [segments]);
 
-  if (!isReady) {
-    return null;
-  }
+  if (!isReady) return null;
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        {/* Rotas de Autenticação */}
+        {/* Autenticação */}
         <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)/register" options={{ headerShown: false }} />
 
-        {/* Abas Principais */}
+        {/* Abas principais */}
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-        {/* Telas dos Mundos (Mapeadas individualmente já que não há layout global nelas) */}
+        {/* Worlds */}
         <Stack.Screen name="(worlds)/cWorld" options={{ headerShown: false }} />
         <Stack.Screen name="(worlds)/javaWorld" options={{ headerShown: false }} />
         <Stack.Screen name="(worlds)/logicWorld" options={{ headerShown: false }} />
         <Stack.Screen name="(worlds)/pythonWorld" options={{ headerShown: false }} />
-        
-        {/* Telas Dinâmicas de Cursos */}
-        <Stack.Screen name="course/[id]" options={{ headerShown: false }} />
-        
+
+        {/* Tela do quiz — rota correta: course/[courseId]/[levelId] */}
+        <Stack.Screen name="course/[courseId]/[levelId]" options={{ headerShown: false }} />
+
         {/* Utilitários */}
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         <Stack.Screen name="admin" options={{ title: 'Painel Admin' }} />

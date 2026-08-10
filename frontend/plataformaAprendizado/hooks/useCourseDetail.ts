@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import { CourseDetail, CourseLevel } from "@/types/courseTypes";
+import { CourseDetail, CourseLevel, CourseLevelWithStatus } from "@/types/courseTypes";
 import { getAccessToken } from "@/services/authService";
+import { MOCK_COURSE_DETAILS } from "./Mockcourses";
 
 const API_BASE = process.env.EXPO_PUBLIC_API_URL;
 
-
 export interface UseCourseDetailReturn {
   course: CourseDetail | null;
-  levels: CourseLevel[];
+  levels: CourseLevelWithStatus[];
   totalXp: number;
   completedCount: number;
   isLoading: boolean;
@@ -29,20 +29,22 @@ export function useCourseDetail(courseId: string): UseCourseDetailReturn {
       setIsLoading(true);
       setError(null);
       try {
-        const token = await getAccessToken();
-
-        const res = await fetch(`${API_BASE}/api/Courses/${courseId}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          }
-        });
-
-        if (!res.ok) throw new Error("Não foi possível carregar o curso.");
-        const data: CourseDetail = await res.json();
-        
+        // ── MOCK (remover quando o backend estiver pronto) ──
+        const data = MOCK_COURSE_DETAILS[courseId];
+        if (!data) throw new Error("Curso não encontrado");
         if (!cancelled) setCourse(data);
+
+        // ── BACKEND (descomentar quando o backend estiver pronto) ──
+        // const token = await getAccessToken();
+        // const res = await fetch(`${API_BASE}/api/Game/${courseId}/sections`, {
+        //   headers: {
+        //     "Content-Type": "application/json",
+        //     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        //   },
+        // });
+        // if (!res.ok) throw new Error("Não foi possível carregar o curso.");
+        // const data: CourseDetail = await res.json();
+        // if (!cancelled) setCourse(data);
       } catch (e: any) {
         if (!cancelled) setError(e.message ?? "Erro desconhecido.");
       } finally {
@@ -56,18 +58,20 @@ export function useCourseDetail(courseId: string): UseCourseDetailReturn {
 
   const refetch = useCallback(() => setFetchTick((t) => t + 1), []);
 
-  const levels: CourseLevel[] = (course?.levels ?? []).map((level, index, arr) => {
-    const isCompleted = course!.completedLevelIds.includes(level.id);
-    const prevCompleted =
-      index === 0 || course!.completedLevelIds.includes(arr[index - 1].id);
+  // Calcula status de cada level com base nos completedLevelIds
+  const levels: CourseLevelWithStatus[] = (course?.levels ?? []).map(
+    (level, index, arr): CourseLevelWithStatus => {
+      const isCompleted = course!.completedLevelIds.includes(level.id);
+      const prevCompleted =
+        index === 0 || course!.completedLevelIds.includes(arr[index - 1].id);
 
-    let status: CourseLevel["status"] = "locked";
-    if (isCompleted) status = "completed";
-    else if (prevCompleted) status = "available";
+      let status: CourseLevelWithStatus["status"] = "locked";
+      if (isCompleted) status = "completed";
+      else if (prevCompleted) status = "available";
 
-    return { ...level, status };
-  });
-
+      return { ...level, status };
+    }
+  );
 
   const completeLevel = useCallback(
     async (levelId: string) => {
@@ -77,18 +81,17 @@ export function useCourseDetail(courseId: string): UseCourseDetailReturn {
       const level = course.levels.find((l) => l.id === levelId);
       if (!level) return;
 
-      try {
-        const token = await getAccessToken();
-        
-        await fetch(`${API_BASE}/api/Courses/${courseId}/levels/${levelId}/complete`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          }
-        });
-      } catch {
-      }
+      // ── BACKEND (descomentar quando o backend estiver pronto) ──
+      // try {
+      //   const token = await getAccessToken();
+      //   await fetch(`${API_BASE}/api/Game/classes/${levelId}/complete`, {
+      //     method: "POST",
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      //     },
+      //   });
+      // } catch {}
 
       setCourse((prev) =>
         prev

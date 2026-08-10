@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { GlobalStyles, Colors, Typography, Spacing, Radii } from "../../styles/GlobalStyles";
 import { router } from "expo-router";
-import { login } from "../../services/authService"; 
+import { mockLogin } from "@/services/MockAuthService";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -25,8 +25,8 @@ export default function Login() {
   const validate = (): boolean => {
     let valid = true;
 
-    if (!email.includes("@")) {
-      setEmailError("Informe um e-mail válido");
+    if (!email.trim()) {
+      setEmailError("Informe o e-mail ou usuário");
       valid = false;
     } else {
       setEmailError("");
@@ -49,9 +49,8 @@ export default function Login() {
     setApiError("");
 
     try {
-      await login(email.trim(), password);
-      // Login bem-sucedido — tokens já salvos no AsyncStorage pelo authService
-      router.push("/(tabs)/explore");
+      await mockLogin(email.trim(), password);
+      router.replace("/(tabs)/explore");
     } catch (error: unknown) {
       const message =
         error instanceof Error
@@ -96,7 +95,7 @@ export default function Login() {
             </View>
           )}
 
-          {/* E-mail */}
+          {/* E-mail ou usuário */}
           <View style={GlobalStyles.inputWrapper}>
             <Text style={GlobalStyles.inputLabel}>E-mail ou usuário</Text>
             <TextInput
@@ -150,9 +149,7 @@ export default function Login() {
                 onPress={() => setShowPassword((prev) => !prev)}
                 disabled={isLoading}
               >
-                <Text style={styles.eyeIcon}>
-                  {showPassword ? "🙈" : "👁️"}
-                </Text>
+                <Text style={styles.eyeIcon}>{showPassword ? "🙈" : "👁️"}</Text>
               </TouchableOpacity>
             </View>
             {!!passwordError && (
@@ -215,8 +212,6 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xxxl,
     justifyContent: "center",
   },
-
-  // Brand
   brandArea: {
     alignItems: "center",
     paddingTop: Spacing.xxxl + Spacing.xl,
@@ -231,9 +226,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: Spacing.base,
   },
-  logoIcon: {
-    fontSize: 30,
-  },
+  logoIcon: { fontSize: 30 },
   brandName: {
     fontSize: Typography.xxl,
     fontWeight: Typography.bold,
@@ -245,25 +238,15 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginTop: Spacing.xs,
   },
-
-  // Form
-  form: {
-    marginBottom: Spacing.xl,
-  },
+  form: { marginBottom: Spacing.xl },
   formTitle: {
     fontSize: Typography.md,
     fontWeight: Typography.semiBold,
     color: Colors.textPrimary,
     marginBottom: Spacing.xl,
   },
-  submitBtn: {
-    marginTop: Spacing.xs,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-
-  // Erro da API
+  submitBtn: { marginTop: Spacing.xs },
+  buttonDisabled: { opacity: 0.7 },
   apiErrorBox: {
     backgroundColor: "#FEE2E2",
     borderRadius: Radii.sm ?? 6,
@@ -275,14 +258,8 @@ const styles = StyleSheet.create({
     fontSize: Typography.sm,
     textAlign: "center",
   },
-
-  // Password
-  passwordWrapper: {
-    position: "relative",
-  },
-  passwordInput: {
-    paddingRight: 48,
-  },
+  passwordWrapper: { position: "relative" },
+  passwordInput: { paddingRight: 48 },
   eyeButton: {
     position: "absolute",
     right: Spacing.base,
@@ -290,11 +267,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: "center",
   },
-  eyeIcon: {
-    fontSize: 18,
-  },
-
-  // Footer
+  eyeIcon: { fontSize: 18 },
   footerText: {
     fontSize: Typography.xs,
     color: Colors.textMuted,

@@ -1,30 +1,45 @@
-import React from "react";
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
-import { GlobalStyles, Colors, Typography, Spacing, Radii } from "../../styles/GlobalStyles";
+import React, { useState } from "react";
+import {
+  View, Text, ScrollView, TouchableOpacity,
+  StyleSheet, ActivityIndicator,
+} from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { GlobalStyles, Colors, Typography, Spacing, Radii } from "@/styles/GlobalStyles";
+import { useCourseDetail } from "@/hooks/useCourseDetail";
 
-interface Fase {
-  id: number;
-  titulo: string;
-  descricao: string;
-  xpGanha: number;
-}
+const COURSE_ID = "c";
 
 export default function CWorld() {
-  const listaDeFases: Fase[] = [
-    { id: 1, titulo: "Sintaxe e Printf", descricao: "O teu primeiro Olá Mundo em C", xpGanha: 100 },
-    { id: 2, titulo: "Tipos de Dados", descricao: "Int, float, char e double", xpGanha: 120 },
-    { id: 3, titulo: "Estruturas de Decisão", descricao: "IF, ELSE e o comando SWITCH", xpGanha: 150 },
-    { id: 4, titulo: "Vetores e Arrays", descricao: "Agrupando dados numa mesma variável", xpGanha: 180 },
-    { id: 5, titulo: "Ponteiros Básicos", descricao: "Entendendo endereços de memória", xpGanha: 250 },
-  ];
+  const { levels, isLoading, error } = useCourseDetail(COURSE_ID);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedLevel = levels.find((l) => l.id === selectedId) ?? null;
 
-  const faseAtualDoUsuario = 1; 
-
-  const iniciarFase = (faseId: number) => {
-    alert(`A abrir o nível ${faseId} de C...`);
+  const handleCardPress = (id: string, status: string) => {
+    if (status === "locked") return;
+    setSelectedId((prev) => (prev === id ? null : id));
   };
+
+  const handleStart = () => {
+    if (!selectedId) return;
+    router.push(`/course/${COURSE_ID}/${selectedId}`);
+  };
+
+  if (isLoading) {
+    return (
+      <View style={[GlobalStyles.screen, GlobalStyles.centered]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[GlobalStyles.screen, GlobalStyles.centered]}>
+        <Text style={{ color: Colors.error }}>{error}</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={GlobalStyles.screen}>
@@ -33,34 +48,63 @@ export default function CWorld() {
         <Text style={GlobalStyles.bodySM}>Domina a gestão de memória e a sintaxe base</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContainer}>
-        {listaDeFases.map((fase, index) => {
-          const concluida = fase.id < faseAtualDoUsuario;
-          const atual = fase.id === faseAtualDoUsuario;
-          const bloqueada = fase.id > faseAtualDoUsuario;
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+      >
+        {levels.map((level, index) => {
+          const isCompleted = level.status === "completed";
+          const isAvailable = level.status === "available";
+          const isLocked = level.status === "locked";
+          const isSelected = selectedId === level.id;
 
           return (
-            <View key={fase.id} style={styles.faseWrapper}>
-              {index < listaDeFases.length - 1 && <View style={styles.connectorLine} />}
+            <View key={level.id} style={styles.faseWrapper}>
+              {/* Linha conectora */}
+              {index < levels.length - 1 && (
+                <View style={[styles.connectorLine, isCompleted && styles.connectorDone]} />
+              )}
+
+              {/* Balão */}
+              {isSelected && selectedLevel && (
+                <View style={styles.balloon}>
+                  <Text style={styles.balloonTitle}>{selectedLevel.title}</Text>
+                  <TouchableOpacity style={styles.balloonBtn} onPress={handleStart} activeOpacity={0.85}>
+                    <Text style={styles.balloonBtnText}>Começar</Text>
+                  </TouchableOpacity>
+                  <View style={styles.balloonArrow} />
+                </View>
+              )}
+
               <TouchableOpacity
-                style={[styles.cardFase, concluida && styles.cardConcluido, atual && styles.cardAtual, bloqueada && styles.cardBloqueado]}
-                disabled={bloqueada}
-                onPress={() => iniciarFase(fase.id)}
+                style={[
+                  styles.cardFase,
+                  isCompleted && styles.cardConcluido,
+                  isAvailable && styles.cardAtual,
+                  isLocked && styles.cardBloqueado,
+                ]}
+                disabled={isLocked}
+                onPress={() => handleCardPress(level.id, level.status)}
                 activeOpacity={0.8}
               >
                 <View style={styles.iconContainer}>
-                  {concluida && <Ionicons name="checkmark-circle" size={28} color={Colors.accentGreen} />}
-                  {atual && <Ionicons name="play-circle" size={32} color={Colors.primary} />}
-                  {bloqueada && <Ionicons name="lock-closed" size={24} color={Colors.textMuted} />}
+                  {isCompleted && <Ionicons name="checkmark-circle" size={28} color={Colors.accentGreen} />}
+                  {isAvailable && <Ionicons name="play-circle" size={32} color={Colors.primary} />}
+                  {isLocked && <Ionicons name="lock-closed" size={24} color={Colors.textMuted} />}
                 </View>
                 <View style={styles.infoContainer}>
-                  <Text style={[styles.tituloFase, bloqueada && { color: Colors.textMuted }, concluida && { textDecorationLine: 'line-through', color: Colors.textSecondary }]}>
-                    Nível {fase.id}: {fase.titulo}
+                  <Text style={[
+                    styles.tituloFase,
+                    isLocked && { color: Colors.textMuted },
+                    isCompleted && { textDecorationLine: "line-through", color: Colors.textSecondary },
+                  ]}>
+                    Nível {level.number}: {level.title}
                   </Text>
-                  <Text style={[styles.descricaoFase, bloqueada && { color: Colors.textMuted }]}>
-                    {bloqueada ? "Bloqueado" : fase.descricao}
+                  <Text style={[styles.descricaoFase, isLocked && { color: Colors.textMuted }]}>
+                    {isLocked ? "Bloqueado" : level.description}
                   </Text>
-                  {!bloqueada && <Text style={styles.xpText}>+{fase.xpGanha} XP</Text>}
+                  {!isLocked && <Text style={styles.xpText}>+{level.xp} XP</Text>}
                 </View>
               </TouchableOpacity>
             </View>
@@ -97,6 +141,53 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.border,
     zIndex: -1,
   },
+  connectorDone: {
+    backgroundColor: Colors.accentGreen + "60",
+  },
+  balloon: {
+    width: "100%",
+    backgroundColor: Colors.background,
+    borderRadius: Radii.md,
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    padding: Spacing.md,
+    marginBottom: Spacing.sm,
+    alignItems: "center",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  balloonTitle: {
+    fontSize: Typography.base,
+    fontWeight: Typography.semiBold,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.sm,
+    textAlign: "center",
+  },
+  balloonBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radii.md,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.xl,
+  },
+  balloonBtnText: {
+    fontSize: Typography.base,
+    fontWeight: Typography.bold,
+    color: Colors.textOnPrimary,
+  },
+  balloonArrow: {
+    position: "absolute",
+    bottom: -8,
+    width: 14,
+    height: 14,
+    backgroundColor: Colors.background,
+    borderRightWidth: 1.5,
+    borderBottomWidth: 1.5,
+    borderColor: Colors.primary,
+    transform: [{ rotate: "45deg" }],
+  },
   cardFase: {
     flexDirection: "row",
     width: "100%",
@@ -131,9 +222,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: Spacing.sm,
   },
-  infoContainer: {
-    flex: 1,
-  },
+  infoContainer: { flex: 1 },
   tituloFase: {
     fontSize: Typography.base,
     fontWeight: Typography.bold,

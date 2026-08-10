@@ -1,69 +1,55 @@
 import { useState, useEffect, useCallback } from "react";
 import { router } from "expo-router";
 import { Colors } from "@/styles/GlobalStyles";
-import {
-  fetchCourses,
-  checkEnrollment,
-  enrollInCourse,
-  CourseDTO,
-} from "@/services/exploreService";
- 
+import { CourseDTO } from "@/services/exploreService";
+import { MOCK_ENROLLED_COURSES, MOCK_EXPLORE_COURSES } from "./Mockcourses";
+
 // ─── Types ────────────────────────────────────────────────────────────────────
- 
+
 export type CourseLevel = "Iniciante" | "Intermediário" | "Avançado";
- 
 export type ExploreCourse = CourseDTO;
- 
+
 export const LEVEL_COLORS: Record<CourseLevel, string> = {
   Iniciante: Colors.accentGreen,
   Intermediário: Colors.accentOrange,
   Avançado: Colors.error,
 };
- 
-// Mapa de categoria → rota (ajuste os paths conforme seu _layout.tsx)
+
 const CATEGORY_ROUTE: Record<string, string> = {
-  C:       "/cWorld",
-  Java:    "/javaWorld",
-  Python:  "/pythonWorld",
-  Logic:   "/logicWorld",
+  c:      "/cWorld",
+  java:   "/javaWorld",
+  python: "/pythonWorld",
+  logic:  "/logicWorld",
 };
- 
+
 const CATEGORIES = ["Todos", "Programação", "Web", "Mobile", "Banco de Dados"];
- 
-// ─── Modal state ──────────────────────────────────────────────────────────────
- 
+
 export interface EnrollModalState {
   visible: boolean;
   course: ExploreCourse | null;
-  enrolling: boolean;   // loading durante a chamada de matrícula
+  enrolling: boolean;
   error: string | null;
 }
- 
-// ─── Return type ──────────────────────────────────────────────────────────────
- 
+
 export interface UseExploreReturn {
-  // lista + filtros
   search: string;
   selectedCategory: string;
   categories: string[];
   filteredCourses: ExploreCourse[];
   loading: boolean;
   error: string | null;
-  // ações de filtro
   setSearch: (value: string) => void;
   clearSearch: () => void;
   setCategory: (category: string) => void;
-  // press no card
   onCoursePress: (course: ExploreCourse) => void;
   checkingEnrollment: boolean;
-  // modal de matrícula
   enrollModal: EnrollModalState;
   confirmEnroll: () => Promise<void>;
   dismissModal: () => void;
 }
- 
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
- 
+
 export function useExplore(): UseExploreReturn {
   const [courses, setCourses] = useState<ExploreCourse[]>([]);
   const [search, setSearchValue] = useState("");
@@ -71,23 +57,30 @@ export function useExplore(): UseExploreReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [checkingEnrollment, setCheckingEnrollment] = useState(false);
- 
+  const [enrolledIds, setEnrolledIds] = useState<string[]>([]);
+
   const [enrollModal, setEnrollModal] = useState<EnrollModalState>({
     visible: false,
     course: null,
     enrolling: false,
     error: null,
   });
- 
-  // ── Busca cursos do backend ao montar ──────────────────────────────────────
+
+  // ── MOCK: carrega cursos e ids matriculados ────────────────────────────────
+  // Quando o backend estiver pronto, substituir por:
+  // const data = await fetchCourses();
+  // const enrolled = await fetchEnrolledCourses(userId);
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchCourses();
-        if (!cancelled) setCourses(data);
+        await new Promise((res) => setTimeout(res, 400)); // simula latência
+        if (!cancelled) {
+          setCourses(MOCK_EXPLORE_COURSES);
+          setEnrolledIds(MOCK_ENROLLED_COURSES.map((c) => c.id));
+        }
       } catch (e: any) {
         if (!cancelled) setError(e.message ?? "Erro ao carregar cursos");
       } finally {
@@ -96,7 +89,7 @@ export function useExplore(): UseExploreReturn {
     })();
     return () => { cancelled = true; };
   }, []);
- 
+
   // ── Filtro local ──────────────────────────────────────────────────────────
   const filteredCourses = courses.filter((course) => {
     const matchesCategory =
@@ -107,21 +100,19 @@ export function useExplore(): UseExploreReturn {
       course.instructor.toLowerCase().includes(search.toLowerCase());
     return matchesCategory && matchesSearch;
   });
- 
-  // ── Press no card: verifica matrícula ─────────────────────────────────────
+
+  // ── Press no card ─────────────────────────────────────────────────────────
   const onCoursePress = useCallback(async (course: ExploreCourse) => {
     try {
       setCheckingEnrollment(true);
-      const enrolled = await checkEnrollment(course.id);
- 
+      await new Promise((res) => setTimeout(res, 300)); // simula latência
+
+      const enrolled = enrolledIds.includes(course.id);
+
       if (enrolled) {
-        // Já matriculado → navega para a trilha correspondente
-        const route = CATEGORY_ROUTE[course.category];
-        if (route) {
-          router.push(route as any);
-        }
+        const route = CATEGORY_ROUTE[course.id];
+        if (route) router.push(route as any);
       } else {
-        // Não matriculado → abre modal de confirmação
         setEnrollModal({ visible: true, course, enrolling: false, error: null });
       }
     } catch (e: any) {
@@ -129,16 +120,19 @@ export function useExplore(): UseExploreReturn {
     } finally {
       setCheckingEnrollment(false);
     }
-  }, []);
- 
-  // ── Confirma matrícula no modal ───────────────────────────────────────────
+  }, [enrolledIds]);
+
+  // ── Confirma matrícula ────────────────────────────────────────────────────
   const confirmEnroll = useCallback(async () => {
     if (!enrollModal.course) return;
     try {
       setEnrollModal((prev) => ({ ...prev, enrolling: true, error: null }));
-      await enrollInCourse(enrollModal.course.id);
-      // Matrícula OK → fecha modal e navega
-      const route = CATEGORY_ROUTE[enrollModal.course.category];
+      await new Promise((res) => setTimeout(res, 600)); // simula latência
+
+      // Adiciona localmente à lista de matriculados
+      setEnrolledIds((prev) => [...prev, enrollModal.course!.id]);
+
+      const route = CATEGORY_ROUTE[enrollModal.course.id];
       setEnrollModal({ visible: false, course: null, enrolling: false, error: null });
       if (route) router.push(route as any);
     } catch (e: any) {
@@ -149,12 +143,12 @@ export function useExplore(): UseExploreReturn {
       }));
     }
   }, [enrollModal.course]);
- 
-  // ── Fecha modal sem fazer nada ────────────────────────────────────────────
+
+  // ── Fecha modal ───────────────────────────────────────────────────────────
   const dismissModal = useCallback(() => {
     setEnrollModal({ visible: false, course: null, enrolling: false, error: null });
   }, []);
- 
+
   return {
     search,
     selectedCategory,
